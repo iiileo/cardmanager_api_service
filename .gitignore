@@ -1,9 +1,11 @@
 # Binaries
 /bin/
 /dist/
+/tmp/
 *.exe
 *.test
 *.out
+build-errors.log
 
 # Dependencies / generated
 /vendor/

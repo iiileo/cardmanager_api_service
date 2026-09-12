@@ -7,15 +7,18 @@ import (
 )
 
 var (
-	ErrValidation = errors.New("validation_error")
-	ErrNotFound   = errors.New("not_found")
-	ErrInternal   = errors.New("internal_error")
+	ErrValidation   = errors.New("validation_error")
+	ErrUnauthorized = errors.New("unauthorized")
+	ErrForbidden    = errors.New("forbidden")
+	ErrNotFound     = errors.New("not_found")
+	ErrConflict     = errors.New("conflict")
+	ErrInternal     = errors.New("internal_error")
 )
 
-type ErrorResponse struct {
-	Error   string `json:"error"`
+type Envelope struct {
+	Code    int    `json:"code"`
 	Message string `json:"message"`
-	Hint    string `json:"hint,omitempty"`
+	Data    any    `json:"data"`
 }
 
 type AppError struct {
@@ -23,6 +26,7 @@ type AppError struct {
 	msg    string
 	hint   string
 	marked error
+	code   int
 }
 
 func NewError(msg string) *AppError {
@@ -43,6 +47,11 @@ func (e *AppError) Mark(mark error) *AppError {
 	return e
 }
 
+func (e *AppError) WithCode(code int) *AppError {
+	e.code = code
+	return e
+}
+
 func (e *AppError) Error() string {
 	if e.msg != "" {
 		return e.msg
@@ -53,9 +62,7 @@ func (e *AppError) Error() string {
 	return "unknown error"
 }
 
-func (e *AppError) Unwrap() error {
-	return e.err
-}
+func (e *AppError) Unwrap() error { return e.err }
 
 func (e *AppError) Is(target error) bool {
 	if e.marked != nil && errors.Is(e.marked, target) {
@@ -64,35 +71,54 @@ func (e *AppError) Is(target error) bool {
 	return errors.Is(e.err, target)
 }
 
-func (e *AppError) Hint() string {
-	return e.hint
+func (e *AppError) Hint() string { return e.hint }
+
+func (e *AppError) Code() int {
+	if e.code != 0 {
+		return e.code
+	}
+	switch {
+	case e.Is(ErrValidation):
+		return 40000
+	case e.Is(ErrUnauthorized):
+		return 40100
+	case e.Is(ErrForbidden):
+		return 40300
+	case e.Is(ErrNotFound):
+		return 40400
+	case e.Is(ErrConflict):
+		return 40900
+	default:
+		return 50000
+	}
 }
 
 func (e *AppError) HTTPStatus() int {
 	switch {
 	case e.Is(ErrValidation):
 		return http.StatusBadRequest
+	case e.Is(ErrUnauthorized):
+		return http.StatusUnauthorized
+	case e.Is(ErrForbidden):
+		return http.StatusForbidden
 	case e.Is(ErrNotFound):
 		return http.StatusNotFound
+	case e.Is(ErrConflict):
+		return http.StatusConflict
 	default:
 		return http.StatusInternalServerError
 	}
 }
 
-func (e *AppError) ToResponse() ErrorResponse {
-	code := "internal_error"
-	switch {
-	case e.Is(ErrValidation):
-		code = ErrValidation.Error()
-	case e.Is(ErrNotFound):
-		code = ErrNotFound.Error()
-	case e.Is(ErrInternal):
-		code = ErrInternal.Error()
+func (e *AppError) ToEnvelope() Envelope {
+	data := any(nil)
+	if e.hint != "" {
+		data = map[string]string{"hint": e.hint}
 	}
-	return ErrorResponse{
-		Error:   code,
+	return Envelope{
+		Code:    e.Code(),
 		Message: e.Error(),
-		Hint:    e.hint,
+		Data:    data,
 	}
 }
 

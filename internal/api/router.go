@@ -6,6 +6,7 @@ import (
 
 	"card_manager/api_service/internal/api/middleware"
 	v1 "card_manager/api_service/internal/api/v1"
+	"card_manager/api_service/internal/auth"
 	"card_manager/api_service/internal/config"
 	"card_manager/api_service/internal/logger"
 	"github.com/gin-gonic/gin"
@@ -19,8 +20,9 @@ type Router struct {
 func NewRouter(
 	cfg *config.Config,
 	log *logger.Logger,
-	hello *v1.HelloHandler,
+	tm *auth.TokenManager,
 	health *v1.HealthHandler,
+	authHandler *v1.AuthHandler,
 ) *Router {
 	if cfg.Server.Mode == "local" {
 		gin.SetMode(gin.DebugMode)
@@ -34,10 +36,22 @@ func NewRouter(
 
 	engine.GET("/healthz", health.Health)
 
-	apiV1 := engine.Group("/v1")
+	apiV1 := engine.Group("/api/v1")
 	{
-		apiV1.GET("/hello", hello.Hello)
-		apiV1.POST("/hello", hello.HelloPost)
+		authGroup := apiV1.Group("/auth")
+		{
+			authGroup.POST("/sms/send", authHandler.SendSMS)
+			authGroup.POST("/login/sms", authHandler.LoginSMS)
+			authGroup.POST("/token/refresh", authHandler.Refresh)
+			authGroup.POST("/logout", authHandler.Logout)
+
+			secured := authGroup.Group("")
+			secured.Use(middleware.RequireAuth(tm))
+			{
+				secured.GET("/me", authHandler.Me)
+				secured.PATCH("/me", authHandler.UpdateMe)
+			}
+		}
 	}
 
 	return &Router{engine: engine}

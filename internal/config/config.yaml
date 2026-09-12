@@ -3,12 +3,20 @@ server:
   mode: local
 
 postgres:
-  host: localhost
+  host: 192.168.0.2
   port: 5432
-  user: cardmanager
-  password: cardmanager
-  dbname: cardmanager
+  user: postgres
+  password: postgres
+  dbname: card_manager
   sslmode: disable
 
 logging:
   level: info
+
+auth:
+  jwt_secret: "card-manager-dev-secret-change-me"
+  access_ttl_seconds: 7200
+  refresh_ttl_seconds: 2592000
+  sms_code_ttl_seconds: 300
+  sms_dev_code: "123456"
+  sms_dev_mode: true

@@ -12,6 +12,7 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Postgres PostgresConfig `mapstructure:"postgres"`
 	Logging  LoggingConfig  `mapstructure:"logging"`
+	Auth     AuthConfig     `mapstructure:"auth"`
 }
 
 type ServerConfig struct {
@@ -37,6 +38,15 @@ func (p PostgresConfig) DSN() string {
 
 type LoggingConfig struct {
 	Level string `mapstructure:"level"`
+}
+
+type AuthConfig struct {
+	JWTSecret         string `mapstructure:"jwt_secret"`
+	AccessTTLSeconds  int64  `mapstructure:"access_ttl_seconds"`
+	RefreshTTLSeconds int64  `mapstructure:"refresh_ttl_seconds"`
+	SmsCodeTTLSeconds int64  `mapstructure:"sms_code_ttl_seconds"`
+	SmsDevCode        string `mapstructure:"sms_dev_code"`
+	SmsDevMode        bool   `mapstructure:"sms_dev_mode"`
 }
 
 func NewConfig() (*Config, error) {
@@ -73,6 +83,21 @@ func (c *Config) Validate() error {
 	}
 	if c.Logging.Level == "" {
 		c.Logging.Level = "info"
+	}
+	if c.Auth.JWTSecret == "" {
+		return fmt.Errorf("auth.jwt_secret is required")
+	}
+	if c.Auth.AccessTTLSeconds <= 0 {
+		c.Auth.AccessTTLSeconds = 7200
+	}
+	if c.Auth.RefreshTTLSeconds <= 0 {
+		c.Auth.RefreshTTLSeconds = 2592000
+	}
+	if c.Auth.SmsCodeTTLSeconds <= 0 {
+		c.Auth.SmsCodeTTLSeconds = 300
+	}
+	if c.Auth.SmsDevCode == "" {
+		c.Auth.SmsDevCode = "123456"
 	}
 	return nil
 }

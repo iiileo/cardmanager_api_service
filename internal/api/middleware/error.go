@@ -11,21 +11,22 @@ import (
 func ErrorHandler(log *logger.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
-		if len(c.Errors) == 0 {
+		if len(c.Errors) == 0 || c.Writer.Written() {
 			return
 		}
 
 		err := c.Errors.Last().Err
 		if appErr, ok := ierr.AsAppError(err); ok {
 			log.Error(c.Request.Context(), "request failed", "error", appErr, "path", c.Request.URL.Path)
-			c.JSON(appErr.HTTPStatus(), appErr.ToResponse())
+			c.JSON(appErr.HTTPStatus(), appErr.ToEnvelope())
 			return
 		}
 
 		log.Error(c.Request.Context(), "unhandled error", "error", err, "path", c.Request.URL.Path)
-		c.JSON(http.StatusInternalServerError, ierr.ErrorResponse{
-			Error:   ierr.ErrInternal.Error(),
+		c.JSON(http.StatusInternalServerError, ierr.Envelope{
+			Code:    50000,
 			Message: "internal server error",
+			Data:    nil,
 		})
 	}
 }
