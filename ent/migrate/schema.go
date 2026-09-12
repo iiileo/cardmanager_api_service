@@ -9,6 +9,34 @@ import (
 )
 
 var (
+	// BizTypesColumns holds the columns for the "biz_types" table.
+	BizTypesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "code", Type: field.TypeString, Unique: true, Size: 16},
+		{Name: "name", Type: field.TypeString, Size: 32},
+		{Name: "sort", Type: field.TypeInt, Default: 0},
+		{Name: "status", Type: field.TypeInt8, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// BizTypesTable holds the schema information for the "biz_types" table.
+	BizTypesTable = &schema.Table{
+		Name:       "biz_types",
+		Columns:    BizTypesColumns,
+		PrimaryKey: []*schema.Column{BizTypesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "biztype_code",
+				Unique:  true,
+				Columns: []*schema.Column{BizTypesColumns[1]},
+			},
+			{
+				Name:    "biztype_status_sort",
+				Unique:  false,
+				Columns: []*schema.Column{BizTypesColumns[4], BizTypesColumns[3]},
+			},
+		},
+	}
 	// OauthIdentitiesColumns holds the columns for the "oauth_identities" table.
 	OauthIdentitiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -202,6 +230,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		BizTypesTable,
 		OauthIdentitiesTable,
 		RefreshTokensTable,
 		SmsCodesTable,
@@ -212,6 +241,9 @@ var (
 )
 
 func init() {
+	BizTypesTable.Annotation = &entsql.Annotation{
+		Table: "biz_types",
+	}
 	OauthIdentitiesTable.Annotation = &entsql.Annotation{
 		Table: "oauth_identities",
 	}

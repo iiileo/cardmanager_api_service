@@ -11,6 +11,7 @@ import (
 
 	"card_manager/api_service/ent/migrate"
 
+	"card_manager/api_service/ent/biztype"
 	"card_manager/api_service/ent/oauthidentity"
 	"card_manager/api_service/ent/refreshtoken"
 	"card_manager/api_service/ent/smscode"
@@ -28,6 +29,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// BizType is the client for interacting with the BizType builders.
+	BizType *BizTypeClient
 	// OAuthIdentity is the client for interacting with the OAuthIdentity builders.
 	OAuthIdentity *OAuthIdentityClient
 	// RefreshToken is the client for interacting with the RefreshToken builders.
@@ -51,6 +54,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.BizType = NewBizTypeClient(c.config)
 	c.OAuthIdentity = NewOAuthIdentityClient(c.config)
 	c.RefreshToken = NewRefreshTokenClient(c.config)
 	c.SmsCode = NewSmsCodeClient(c.config)
@@ -149,6 +153,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:           ctx,
 		config:        cfg,
+		BizType:       NewBizTypeClient(cfg),
 		OAuthIdentity: NewOAuthIdentityClient(cfg),
 		RefreshToken:  NewRefreshTokenClient(cfg),
 		SmsCode:       NewSmsCodeClient(cfg),
@@ -174,6 +179,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:           ctx,
 		config:        cfg,
+		BizType:       NewBizTypeClient(cfg),
 		OAuthIdentity: NewOAuthIdentityClient(cfg),
 		RefreshToken:  NewRefreshTokenClient(cfg),
 		SmsCode:       NewSmsCodeClient(cfg),
@@ -186,7 +192,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		OAuthIdentity.
+//		BizType.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -209,7 +215,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.OAuthIdentity, c.RefreshToken, c.SmsCode, c.Store, c.StoreMember, c.User,
+		c.BizType, c.OAuthIdentity, c.RefreshToken, c.SmsCode, c.Store, c.StoreMember,
+		c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -219,7 +226,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.OAuthIdentity, c.RefreshToken, c.SmsCode, c.Store, c.StoreMember, c.User,
+		c.BizType, c.OAuthIdentity, c.RefreshToken, c.SmsCode, c.Store, c.StoreMember,
+		c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -228,6 +236,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *BizTypeMutation:
+		return c.BizType.mutate(ctx, m)
 	case *OAuthIdentityMutation:
 		return c.OAuthIdentity.mutate(ctx, m)
 	case *RefreshTokenMutation:
@@ -242,6 +252,139 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// BizTypeClient is a client for the BizType schema.
+type BizTypeClient struct {
+	config
+}
+
+// NewBizTypeClient returns a client for the BizType from the given config.
+func NewBizTypeClient(c config) *BizTypeClient {
+	return &BizTypeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `biztype.Hooks(f(g(h())))`.
+func (c *BizTypeClient) Use(hooks ...Hook) {
+	c.hooks.BizType = append(c.hooks.BizType, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `biztype.Intercept(f(g(h())))`.
+func (c *BizTypeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BizType = append(c.inters.BizType, interceptors...)
+}
+
+// Create returns a builder for creating a BizType entity.
+func (c *BizTypeClient) Create() *BizTypeCreate {
+	mutation := newBizTypeMutation(c.config, OpCreate)
+	return &BizTypeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BizType entities.
+func (c *BizTypeClient) CreateBulk(builders ...*BizTypeCreate) *BizTypeCreateBulk {
+	return &BizTypeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BizTypeClient) MapCreateBulk(slice any, setFunc func(*BizTypeCreate, int)) *BizTypeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BizTypeCreateBulk{err: fmt.Errorf("calling to BizTypeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BizTypeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BizTypeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BizType.
+func (c *BizTypeClient) Update() *BizTypeUpdate {
+	mutation := newBizTypeMutation(c.config, OpUpdate)
+	return &BizTypeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BizTypeClient) UpdateOne(_m *BizType) *BizTypeUpdateOne {
+	mutation := newBizTypeMutation(c.config, OpUpdateOne, withBizType(_m))
+	return &BizTypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BizTypeClient) UpdateOneID(id int64) *BizTypeUpdateOne {
+	mutation := newBizTypeMutation(c.config, OpUpdateOne, withBizTypeID(id))
+	return &BizTypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BizType.
+func (c *BizTypeClient) Delete() *BizTypeDelete {
+	mutation := newBizTypeMutation(c.config, OpDelete)
+	return &BizTypeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BizTypeClient) DeleteOne(_m *BizType) *BizTypeDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BizTypeClient) DeleteOneID(id int64) *BizTypeDeleteOne {
+	builder := c.Delete().Where(biztype.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BizTypeDeleteOne{builder}
+}
+
+// Query returns a query builder for BizType.
+func (c *BizTypeClient) Query() *BizTypeQuery {
+	return &BizTypeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBizType},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BizType entity by its id.
+func (c *BizTypeClient) Get(ctx context.Context, id int64) (*BizType, error) {
+	return c.Query().Where(biztype.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BizTypeClient) GetX(ctx context.Context, id int64) *BizType {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *BizTypeClient) Hooks() []Hook {
+	return c.hooks.BizType
+}
+
+// Interceptors returns the client interceptors.
+func (c *BizTypeClient) Interceptors() []Interceptor {
+	return c.inters.BizType
+}
+
+func (c *BizTypeClient) mutate(ctx context.Context, m *BizTypeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BizTypeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BizTypeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BizTypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BizTypeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BizType mutation op: %q", m.Op())
 	}
 }
 
@@ -1046,9 +1189,11 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		OAuthIdentity, RefreshToken, SmsCode, Store, StoreMember, User []ent.Hook
+		BizType, OAuthIdentity, RefreshToken, SmsCode, Store, StoreMember,
+		User []ent.Hook
 	}
 	inters struct {
-		OAuthIdentity, RefreshToken, SmsCode, Store, StoreMember, User []ent.Interceptor
+		BizType, OAuthIdentity, RefreshToken, SmsCode, Store, StoreMember,
+		User []ent.Interceptor
 	}
 )

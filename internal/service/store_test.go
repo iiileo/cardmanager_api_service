@@ -146,13 +146,36 @@ func (m *memMemberRepo) UpdateStatus(_ context.Context, id int64, status string,
 	return item, nil
 }
 
+type memBizTypeSvc struct {
+	codes map[string]string
+}
+
+func (m *memBizTypeSvc) List(_ context.Context) (*dto.BizTypeListResponse, error) {
+	list := make([]*dto.BizTypeItem, 0, len(m.codes))
+	for code, name := range m.codes {
+		list = append(list, &dto.BizTypeItem{Code: code, Name: name})
+	}
+	return &dto.BizTypeListResponse{List: list}, nil
+}
+
+func (m *memBizTypeSvc) ValidateCode(_ context.Context, code string) error {
+	if code == "" {
+		return nil
+	}
+	if _, ok := m.codes[code]; !ok {
+		return fmt.Errorf("invalid biz type")
+	}
+	return nil
+}
+
 func TestStoreService_CreateAndJoin(t *testing.T) {
 	log := logger.NewLogger(&config.Config{Logging: config.LoggingConfig{Level: "error"}})
 	members := &memMemberRepo{byKey: map[string]*domainmember.Member{}, byID: map[int64]*domainmember.Member{}}
 	stores := &memStoreRepo{
 		byID: map[int64]*domainstore.Store{}, byCode: map[string]*domainstore.Store{}, members: members,
 	}
-	svc := NewStoreService(stores, members, log)
+	biz := &memBizTypeSvc{codes: map[string]string{"tea": "茶饮", "beauty": "美业", "retail": "零售"}}
+	svc := NewStoreService(stores, members, biz, log)
 
 	created, err := svc.Create(context.Background(), 1, dto.CreateStoreRequest{
 		Name: "阳光茶饮", City: "杭州", OpenTime: "10:00", CloseTime: "22:00",
@@ -162,6 +185,19 @@ func TestStoreService_CreateAndJoin(t *testing.T) {
 	}
 	if created.InviteCode == "" || created.Role != "owner" {
 		t.Fatalf("bad create: %+v", created)
+	}
+	if !inviteCodeRE.MatchString(created.InviteCode) {
+		t.Fatalf("invite code should be 6 alnum uppercase, got %q", created.InviteCode)
+	}
+	hasLetter := false
+	for _, c := range created.InviteCode {
+		if c >= 'A' && c <= 'Z' {
+			hasLetter = true
+			break
+		}
+	}
+	if !hasLetter {
+		t.Fatalf("invite code should contain uppercase letter, got %q", created.InviteCode)
 	}
 
 	preview, err := svc.PreviewInvite(context.Background(), created.InviteCode)

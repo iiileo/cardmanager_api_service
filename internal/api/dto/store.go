@@ -6,7 +6,16 @@ type CreateStoreRequest struct {
 	Address   *string `json:"address"`
 	OpenTime  string  `json:"open_time" binding:"required"`
 	CloseTime string  `json:"close_time" binding:"required"`
-	BizType   *string `json:"biz_type"`
+	BizType   *string `json:"biz_type"` // 业态 code，见 GET /biz-types
+}
+
+type BizTypeItem struct {
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+type BizTypeListResponse struct {
+	List []*BizTypeItem `json:"list"`
 }
 
 type UpdateStoreRequest struct {

@@ -8,6 +8,18 @@ import (
 	"fmt"
 )
 
+// The BizTypeFunc type is an adapter to allow the use of ordinary
+// function as BizType mutator.
+type BizTypeFunc func(context.Context, *ent.BizTypeMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BizTypeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BizTypeMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BizTypeMutation", m)
+}
+
 // The OAuthIdentityFunc type is an adapter to allow the use of ordinary
 // function as OAuthIdentity mutator.
 type OAuthIdentityFunc func(context.Context, *ent.OAuthIdentityMutation) (ent.Value, error)

@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// BizType is the predicate function for biztype builders.
+type BizType func(*sql.Selector)
+
 // OAuthIdentity is the predicate function for oauthidentity builders.
 type OAuthIdentity func(*sql.Selector)
 

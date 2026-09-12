@@ -16,7 +16,10 @@ import (
 	"card_manager/api_service/internal/logger"
 )
 
-var timeRE = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d$`)
+var (
+	timeRE       = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d$`)
+	inviteCodeRE = regexp.MustCompile(`^[0-9A-Z]{6}$`)
+)
 
 type StoreService interface {
 	ListMine(ctx context.Context, userID int64) (*dto.StoreListResponse, error)
@@ -38,17 +41,19 @@ type StoreService interface {
 }
 
 type storeService struct {
-	stores  domainstore.Repository
-	members domainmember.Repository
-	log     *logger.Logger
+	stores   domainstore.Repository
+	members  domainmember.Repository
+	bizTypes BizTypeService
+	log      *logger.Logger
 }
 
 func NewStoreService(
 	stores domainstore.Repository,
 	members domainmember.Repository,
+	bizTypes BizTypeService,
 	log *logger.Logger,
 ) StoreService {
-	return &storeService{stores: stores, members: members, log: log}
+	return &storeService{stores: stores, members: members, bizTypes: bizTypes, log: log}
 }
 
 func (s *storeService) ListMine(ctx context.Context, userID int64) (*dto.StoreListResponse, error) {
@@ -95,6 +100,12 @@ func (s *storeService) Create(ctx context.Context, userID int64, req dto.CreateS
 	if !timeRE.MatchString(openTime) || !timeRE.MatchString(closeTime) {
 		return nil, ierr.Validation("营业时间格式应为 HH:MM")
 	}
+	bizType := trimPtr(req.BizType)
+	if bizType != nil {
+		if err := s.bizTypes.ValidateCode(ctx, *bizType); err != nil {
+			return nil, err
+		}
+	}
 
 	code, err := s.uniqueInviteCode(ctx)
 	if err != nil {
@@ -107,7 +118,7 @@ func (s *storeService) Create(ctx context.Context, userID int64, req dto.CreateS
 		Address:     trimPtr(req.Address),
 		OpenTime:    openTime,
 		CloseTime:   closeTime,
-		BizType:     trimPtr(req.BizType),
+		BizType:     bizType,
 		InviteCode:  code,
 		OwnerUserID: userID,
 	})
@@ -175,7 +186,13 @@ func (s *storeService) Update(ctx context.Context, userID, storeID int64, req dt
 		in.CloseTime = &v
 	}
 	if req.BizType != nil {
-		in.BizType = trimPtr(req.BizType)
+		bizType := trimPtr(req.BizType)
+		if bizType != nil {
+			if err := s.bizTypes.ValidateCode(ctx, *bizType); err != nil {
+				return nil, err
+			}
+		}
+		in.BizType = bizType
 	}
 
 	st, err := s.stores.Update(ctx, storeID, in)
@@ -186,9 +203,9 @@ func (s *storeService) Update(ctx context.Context, userID, storeID int64, req dt
 }
 
 func (s *storeService) PreviewInvite(ctx context.Context, code string) (*dto.InvitePreviewResponse, error) {
-	code = strings.TrimSpace(code)
-	if len(code) != 6 {
-		return nil, ierr.Validation("邀请码应为6位")
+	code = normalizeInviteCode(code)
+	if !inviteCodeRE.MatchString(code) {
+		return nil, ierr.Validation("邀请码应为6位大写字母或数字")
 	}
 	st, err := s.stores.GetByInviteCode(ctx, code)
 	if err != nil {
@@ -208,9 +225,9 @@ func (s *storeService) Join(ctx context.Context, userID int64, req dto.JoinStore
 	if !req.Agreed {
 		return nil, ierr.Validation("请先同意加入申请")
 	}
-	code := strings.TrimSpace(req.InviteCode)
-	if len(code) != 6 {
-		return nil, ierr.Validation("邀请码应为6位")
+	code := normalizeInviteCode(req.InviteCode)
+	if !inviteCodeRE.MatchString(code) {
+		return nil, ierr.Validation("邀请码应为6位大写字母或数字")
 	}
 	st, err := s.stores.GetByInviteCode(ctx, code)
 	if err != nil {
@@ -391,7 +408,7 @@ func (s *storeService) RequireOwner(ctx context.Context, userID, storeID int64) 
 
 func (s *storeService) uniqueInviteCode(ctx context.Context) (string, error) {
 	for i := 0; i < 20; i++ {
-		code, err := randomDigits(6)
+		code, err := randomInviteCode(6)
 		if err != nil {
 			return "", ierr.Internal(err)
 		}
@@ -460,15 +477,39 @@ func trimPtr(v *string) *string {
 	return &s
 }
 
-func randomDigits(n int) (string, error) {
-	const digits = "0123456789"
+func normalizeInviteCode(code string) string {
+	return strings.ToUpper(strings.TrimSpace(code))
+}
+
+// randomInviteCode 生成含数字与大写字母的邀请码，且至少包含 1 个大写字母。
+func randomInviteCode(n int) (string, error) {
+	const charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	if n < 2 {
+		return "", fmt.Errorf("invite code length too short")
+	}
 	buf := make([]byte, n)
 	if _, err := rand.Read(buf); err != nil {
 		return "", err
 	}
 	out := make([]byte, n)
 	for i := range out {
-		out[i] = digits[int(buf[i])%10]
+		out[i] = charset[int(buf[i])%len(charset)]
+	}
+	hasLetter := false
+	for _, c := range out {
+		if c >= 'A' && c <= 'Z' {
+			hasLetter = true
+			break
+		}
+	}
+	if !hasLetter {
+		pos := int(buf[0]) % n
+		letterBuf := make([]byte, 1)
+		if _, err := rand.Read(letterBuf); err != nil {
+			return "", err
+		}
+		out[pos] = letters[int(letterBuf[0])%len(letters)]
 	}
 	return string(out), nil
 }

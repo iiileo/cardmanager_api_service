@@ -25,6 +25,7 @@ func NewRouter(
 	health *v1.HealthHandler,
 	authHandler *v1.AuthHandler,
 	storeHandler *v1.StoreHandler,
+	bizTypeHandler *v1.BizTypeHandler,
 	storeSvc service.StoreService,
 ) *Router {
 	if cfg.Server.Mode == "local" {
@@ -59,6 +60,8 @@ func NewRouter(
 		authed := apiV1.Group("")
 		authed.Use(middleware.RequireAuth(tm))
 		{
+			authed.GET("/biz-types", bizTypeHandler.List)
+
 			stores := authed.Group("/stores")
 			{
 				stores.GET("", storeHandler.List)

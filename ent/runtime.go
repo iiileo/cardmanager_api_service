@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"card_manager/api_service/ent/biztype"
 	"card_manager/api_service/ent/oauthidentity"
 	"card_manager/api_service/ent/refreshtoken"
 	"card_manager/api_service/ent/schema"
@@ -17,6 +18,62 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	biztypeFields := schema.BizType{}.Fields()
+	_ = biztypeFields
+	// biztypeDescCode is the schema descriptor for code field.
+	biztypeDescCode := biztypeFields[1].Descriptor()
+	// biztype.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	biztype.CodeValidator = func() func(string) error {
+		validators := biztypeDescCode.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(code string) error {
+			for _, fn := range fns {
+				if err := fn(code); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// biztypeDescName is the schema descriptor for name field.
+	biztypeDescName := biztypeFields[2].Descriptor()
+	// biztype.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	biztype.NameValidator = func() func(string) error {
+		validators := biztypeDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// biztypeDescSort is the schema descriptor for sort field.
+	biztypeDescSort := biztypeFields[3].Descriptor()
+	// biztype.DefaultSort holds the default value on creation for the sort field.
+	biztype.DefaultSort = biztypeDescSort.Default.(int)
+	// biztypeDescStatus is the schema descriptor for status field.
+	biztypeDescStatus := biztypeFields[4].Descriptor()
+	// biztype.DefaultStatus holds the default value on creation for the status field.
+	biztype.DefaultStatus = biztypeDescStatus.Default.(int8)
+	// biztypeDescCreatedAt is the schema descriptor for created_at field.
+	biztypeDescCreatedAt := biztypeFields[5].Descriptor()
+	// biztype.DefaultCreatedAt holds the default value on creation for the created_at field.
+	biztype.DefaultCreatedAt = biztypeDescCreatedAt.Default.(func() time.Time)
+	// biztypeDescUpdatedAt is the schema descriptor for updated_at field.
+	biztypeDescUpdatedAt := biztypeFields[6].Descriptor()
+	// biztype.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	biztype.DefaultUpdatedAt = biztypeDescUpdatedAt.Default.(func() time.Time)
+	// biztype.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	biztype.UpdateDefaultUpdatedAt = biztypeDescUpdatedAt.UpdateDefault.(func() time.Time)
 	oauthidentityFields := schema.OAuthIdentity{}.Fields()
 	_ = oauthidentityFields
 	// oauthidentityDescProvider is the schema descriptor for provider field.

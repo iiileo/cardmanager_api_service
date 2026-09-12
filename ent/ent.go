@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"card_manager/api_service/ent/biztype"
 	"card_manager/api_service/ent/oauthidentity"
 	"card_manager/api_service/ent/refreshtoken"
 	"card_manager/api_service/ent/smscode"
@@ -78,6 +79,7 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			biztype.Table:       biztype.ValidColumn,
 			oauthidentity.Table: oauthidentity.ValidColumn,
 			refreshtoken.Table:  refreshtoken.ValidColumn,
 			smscode.Table:       smscode.ValidColumn,

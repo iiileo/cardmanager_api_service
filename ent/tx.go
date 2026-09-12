@@ -12,6 +12,8 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// BizType is the client for interacting with the BizType builders.
+	BizType *BizTypeClient
 	// OAuthIdentity is the client for interacting with the OAuthIdentity builders.
 	OAuthIdentity *OAuthIdentityClient
 	// RefreshToken is the client for interacting with the RefreshToken builders.
@@ -155,6 +157,7 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.BizType = NewBizTypeClient(tx.config)
 	tx.OAuthIdentity = NewOAuthIdentityClient(tx.config)
 	tx.RefreshToken = NewRefreshTokenClient(tx.config)
 	tx.SmsCode = NewSmsCodeClient(tx.config)
@@ -170,7 +173,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: OAuthIdentity.QueryXXX(), the query will be executed
+// applies a query, for example: BizType.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

@@ -33,15 +33,19 @@ func main() {
 			repository.NewSmsCodeRepository,
 			repository.NewStoreRepository,
 			repository.NewStoreMemberRepository,
+			repository.NewBizTypeRepository,
 
 			service.NewAuthService,
+			service.NewBizTypeService,
 			service.NewStoreService,
 
 			v1.NewHealthHandler,
 			v1.NewAuthHandler,
 			v1.NewStoreHandler,
+			v1.NewBizTypeHandler,
 			api.NewRouter,
 		),
+		fx.Invoke(postgres.SeedDefaults),
 		fx.Invoke(api.StartServer),
 	).Run()
 }
