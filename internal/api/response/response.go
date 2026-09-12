@@ -10,7 +10,7 @@ import (
 func OK(c *gin.Context, data any) {
 	c.JSON(http.StatusOK, ierr.Envelope{
 		Code:    0,
-		Message: "ok",
+		Message: ierr.MsgOK,
 		Data:    data,
 	})
 }
@@ -22,7 +22,7 @@ func Fail(c *gin.Context, err error) {
 	}
 	c.JSON(http.StatusInternalServerError, ierr.Envelope{
 		Code:    50000,
-		Message: "internal server error",
+		Message: ierr.MsgInternal,
 		Data:    nil,
 	})
 }

@@ -7,6 +7,8 @@ import (
 	"card_manager/api_service/ent/refreshtoken"
 	"card_manager/api_service/ent/schema"
 	"card_manager/api_service/ent/smscode"
+	"card_manager/api_service/ent/store"
+	"card_manager/api_service/ent/storemember"
 	"card_manager/api_service/ent/user"
 	"time"
 )
@@ -179,6 +181,172 @@ func init() {
 	smscodeDescCreatedAt := smscodeFields[6].Descriptor()
 	// smscode.DefaultCreatedAt holds the default value on creation for the created_at field.
 	smscode.DefaultCreatedAt = smscodeDescCreatedAt.Default.(func() time.Time)
+	storeFields := schema.Store{}.Fields()
+	_ = storeFields
+	// storeDescName is the schema descriptor for name field.
+	storeDescName := storeFields[1].Descriptor()
+	// store.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	store.NameValidator = func() func(string) error {
+		validators := storeDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// storeDescCity is the schema descriptor for city field.
+	storeDescCity := storeFields[2].Descriptor()
+	// store.CityValidator is a validator for the "city" field. It is called by the builders before save.
+	store.CityValidator = func() func(string) error {
+		validators := storeDescCity.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(city string) error {
+			for _, fn := range fns {
+				if err := fn(city); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// storeDescAddress is the schema descriptor for address field.
+	storeDescAddress := storeFields[3].Descriptor()
+	// store.AddressValidator is a validator for the "address" field. It is called by the builders before save.
+	store.AddressValidator = storeDescAddress.Validators[0].(func(string) error)
+	// storeDescOpenTime is the schema descriptor for open_time field.
+	storeDescOpenTime := storeFields[4].Descriptor()
+	// store.OpenTimeValidator is a validator for the "open_time" field. It is called by the builders before save.
+	store.OpenTimeValidator = func() func(string) error {
+		validators := storeDescOpenTime.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(open_time string) error {
+			for _, fn := range fns {
+				if err := fn(open_time); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// storeDescCloseTime is the schema descriptor for close_time field.
+	storeDescCloseTime := storeFields[5].Descriptor()
+	// store.CloseTimeValidator is a validator for the "close_time" field. It is called by the builders before save.
+	store.CloseTimeValidator = func() func(string) error {
+		validators := storeDescCloseTime.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(close_time string) error {
+			for _, fn := range fns {
+				if err := fn(close_time); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// storeDescBizType is the schema descriptor for biz_type field.
+	storeDescBizType := storeFields[6].Descriptor()
+	// store.BizTypeValidator is a validator for the "biz_type" field. It is called by the builders before save.
+	store.BizTypeValidator = storeDescBizType.Validators[0].(func(string) error)
+	// storeDescInviteCode is the schema descriptor for invite_code field.
+	storeDescInviteCode := storeFields[7].Descriptor()
+	// store.InviteCodeValidator is a validator for the "invite_code" field. It is called by the builders before save.
+	store.InviteCodeValidator = func() func(string) error {
+		validators := storeDescInviteCode.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(invite_code string) error {
+			for _, fn := range fns {
+				if err := fn(invite_code); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// storeDescStatus is the schema descriptor for status field.
+	storeDescStatus := storeFields[9].Descriptor()
+	// store.DefaultStatus holds the default value on creation for the status field.
+	store.DefaultStatus = storeDescStatus.Default.(int8)
+	// storeDescCreatedAt is the schema descriptor for created_at field.
+	storeDescCreatedAt := storeFields[10].Descriptor()
+	// store.DefaultCreatedAt holds the default value on creation for the created_at field.
+	store.DefaultCreatedAt = storeDescCreatedAt.Default.(func() time.Time)
+	// storeDescUpdatedAt is the schema descriptor for updated_at field.
+	storeDescUpdatedAt := storeFields[11].Descriptor()
+	// store.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	store.DefaultUpdatedAt = storeDescUpdatedAt.Default.(func() time.Time)
+	// store.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	store.UpdateDefaultUpdatedAt = storeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	storememberFields := schema.StoreMember{}.Fields()
+	_ = storememberFields
+	// storememberDescRole is the schema descriptor for role field.
+	storememberDescRole := storememberFields[3].Descriptor()
+	// storemember.RoleValidator is a validator for the "role" field. It is called by the builders before save.
+	storemember.RoleValidator = func() func(string) error {
+		validators := storememberDescRole.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(role string) error {
+			for _, fn := range fns {
+				if err := fn(role); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// storememberDescStatus is the schema descriptor for status field.
+	storememberDescStatus := storememberFields[4].Descriptor()
+	// storemember.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	storemember.StatusValidator = func() func(string) error {
+		validators := storememberDescStatus.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(status string) error {
+			for _, fn := range fns {
+				if err := fn(status); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// storememberDescDisplayName is the schema descriptor for display_name field.
+	storememberDescDisplayName := storememberFields[5].Descriptor()
+	// storemember.DisplayNameValidator is a validator for the "display_name" field. It is called by the builders before save.
+	storemember.DisplayNameValidator = storememberDescDisplayName.Validators[0].(func(string) error)
+	// storememberDescCreatedAt is the schema descriptor for created_at field.
+	storememberDescCreatedAt := storememberFields[7].Descriptor()
+	// storemember.DefaultCreatedAt holds the default value on creation for the created_at field.
+	storemember.DefaultCreatedAt = storememberDescCreatedAt.Default.(func() time.Time)
+	// storememberDescUpdatedAt is the schema descriptor for updated_at field.
+	storememberDescUpdatedAt := storememberFields[8].Descriptor()
+	// storemember.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	storemember.DefaultUpdatedAt = storememberDescUpdatedAt.Default.(func() time.Time)
+	// storemember.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	storemember.UpdateDefaultUpdatedAt = storememberDescUpdatedAt.UpdateDefault.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescPhone is the schema descriptor for phone field.

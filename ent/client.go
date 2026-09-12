@@ -14,6 +14,8 @@ import (
 	"card_manager/api_service/ent/oauthidentity"
 	"card_manager/api_service/ent/refreshtoken"
 	"card_manager/api_service/ent/smscode"
+	"card_manager/api_service/ent/store"
+	"card_manager/api_service/ent/storemember"
 	"card_manager/api_service/ent/user"
 
 	"entgo.io/ent"
@@ -32,6 +34,10 @@ type Client struct {
 	RefreshToken *RefreshTokenClient
 	// SmsCode is the client for interacting with the SmsCode builders.
 	SmsCode *SmsCodeClient
+	// Store is the client for interacting with the Store builders.
+	Store *StoreClient
+	// StoreMember is the client for interacting with the StoreMember builders.
+	StoreMember *StoreMemberClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -48,6 +54,8 @@ func (c *Client) init() {
 	c.OAuthIdentity = NewOAuthIdentityClient(c.config)
 	c.RefreshToken = NewRefreshTokenClient(c.config)
 	c.SmsCode = NewSmsCodeClient(c.config)
+	c.Store = NewStoreClient(c.config)
+	c.StoreMember = NewStoreMemberClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -144,6 +152,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		OAuthIdentity: NewOAuthIdentityClient(cfg),
 		RefreshToken:  NewRefreshTokenClient(cfg),
 		SmsCode:       NewSmsCodeClient(cfg),
+		Store:         NewStoreClient(cfg),
+		StoreMember:   NewStoreMemberClient(cfg),
 		User:          NewUserClient(cfg),
 	}, nil
 }
@@ -167,6 +177,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		OAuthIdentity: NewOAuthIdentityClient(cfg),
 		RefreshToken:  NewRefreshTokenClient(cfg),
 		SmsCode:       NewSmsCodeClient(cfg),
+		Store:         NewStoreClient(cfg),
+		StoreMember:   NewStoreMemberClient(cfg),
 		User:          NewUserClient(cfg),
 	}, nil
 }
@@ -196,19 +208,21 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.OAuthIdentity.Use(hooks...)
-	c.RefreshToken.Use(hooks...)
-	c.SmsCode.Use(hooks...)
-	c.User.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.OAuthIdentity, c.RefreshToken, c.SmsCode, c.Store, c.StoreMember, c.User,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.OAuthIdentity.Intercept(interceptors...)
-	c.RefreshToken.Intercept(interceptors...)
-	c.SmsCode.Intercept(interceptors...)
-	c.User.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.OAuthIdentity, c.RefreshToken, c.SmsCode, c.Store, c.StoreMember, c.User,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -220,6 +234,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.RefreshToken.mutate(ctx, m)
 	case *SmsCodeMutation:
 		return c.SmsCode.mutate(ctx, m)
+	case *StoreMutation:
+		return c.Store.mutate(ctx, m)
+	case *StoreMemberMutation:
+		return c.StoreMember.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -626,6 +644,272 @@ func (c *SmsCodeClient) mutate(ctx context.Context, m *SmsCodeMutation) (Value, 
 	}
 }
 
+// StoreClient is a client for the Store schema.
+type StoreClient struct {
+	config
+}
+
+// NewStoreClient returns a client for the Store from the given config.
+func NewStoreClient(c config) *StoreClient {
+	return &StoreClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `store.Hooks(f(g(h())))`.
+func (c *StoreClient) Use(hooks ...Hook) {
+	c.hooks.Store = append(c.hooks.Store, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `store.Intercept(f(g(h())))`.
+func (c *StoreClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Store = append(c.inters.Store, interceptors...)
+}
+
+// Create returns a builder for creating a Store entity.
+func (c *StoreClient) Create() *StoreCreate {
+	mutation := newStoreMutation(c.config, OpCreate)
+	return &StoreCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Store entities.
+func (c *StoreClient) CreateBulk(builders ...*StoreCreate) *StoreCreateBulk {
+	return &StoreCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *StoreClient) MapCreateBulk(slice any, setFunc func(*StoreCreate, int)) *StoreCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &StoreCreateBulk{err: fmt.Errorf("calling to StoreClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*StoreCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &StoreCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Store.
+func (c *StoreClient) Update() *StoreUpdate {
+	mutation := newStoreMutation(c.config, OpUpdate)
+	return &StoreUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *StoreClient) UpdateOne(_m *Store) *StoreUpdateOne {
+	mutation := newStoreMutation(c.config, OpUpdateOne, withStore(_m))
+	return &StoreUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *StoreClient) UpdateOneID(id int64) *StoreUpdateOne {
+	mutation := newStoreMutation(c.config, OpUpdateOne, withStoreID(id))
+	return &StoreUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Store.
+func (c *StoreClient) Delete() *StoreDelete {
+	mutation := newStoreMutation(c.config, OpDelete)
+	return &StoreDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *StoreClient) DeleteOne(_m *Store) *StoreDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *StoreClient) DeleteOneID(id int64) *StoreDeleteOne {
+	builder := c.Delete().Where(store.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &StoreDeleteOne{builder}
+}
+
+// Query returns a query builder for Store.
+func (c *StoreClient) Query() *StoreQuery {
+	return &StoreQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeStore},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Store entity by its id.
+func (c *StoreClient) Get(ctx context.Context, id int64) (*Store, error) {
+	return c.Query().Where(store.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *StoreClient) GetX(ctx context.Context, id int64) *Store {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *StoreClient) Hooks() []Hook {
+	return c.hooks.Store
+}
+
+// Interceptors returns the client interceptors.
+func (c *StoreClient) Interceptors() []Interceptor {
+	return c.inters.Store
+}
+
+func (c *StoreClient) mutate(ctx context.Context, m *StoreMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&StoreCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&StoreUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&StoreUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&StoreDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Store mutation op: %q", m.Op())
+	}
+}
+
+// StoreMemberClient is a client for the StoreMember schema.
+type StoreMemberClient struct {
+	config
+}
+
+// NewStoreMemberClient returns a client for the StoreMember from the given config.
+func NewStoreMemberClient(c config) *StoreMemberClient {
+	return &StoreMemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `storemember.Hooks(f(g(h())))`.
+func (c *StoreMemberClient) Use(hooks ...Hook) {
+	c.hooks.StoreMember = append(c.hooks.StoreMember, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `storemember.Intercept(f(g(h())))`.
+func (c *StoreMemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.StoreMember = append(c.inters.StoreMember, interceptors...)
+}
+
+// Create returns a builder for creating a StoreMember entity.
+func (c *StoreMemberClient) Create() *StoreMemberCreate {
+	mutation := newStoreMemberMutation(c.config, OpCreate)
+	return &StoreMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of StoreMember entities.
+func (c *StoreMemberClient) CreateBulk(builders ...*StoreMemberCreate) *StoreMemberCreateBulk {
+	return &StoreMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *StoreMemberClient) MapCreateBulk(slice any, setFunc func(*StoreMemberCreate, int)) *StoreMemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &StoreMemberCreateBulk{err: fmt.Errorf("calling to StoreMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*StoreMemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &StoreMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for StoreMember.
+func (c *StoreMemberClient) Update() *StoreMemberUpdate {
+	mutation := newStoreMemberMutation(c.config, OpUpdate)
+	return &StoreMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *StoreMemberClient) UpdateOne(_m *StoreMember) *StoreMemberUpdateOne {
+	mutation := newStoreMemberMutation(c.config, OpUpdateOne, withStoreMember(_m))
+	return &StoreMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *StoreMemberClient) UpdateOneID(id int64) *StoreMemberUpdateOne {
+	mutation := newStoreMemberMutation(c.config, OpUpdateOne, withStoreMemberID(id))
+	return &StoreMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for StoreMember.
+func (c *StoreMemberClient) Delete() *StoreMemberDelete {
+	mutation := newStoreMemberMutation(c.config, OpDelete)
+	return &StoreMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *StoreMemberClient) DeleteOne(_m *StoreMember) *StoreMemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *StoreMemberClient) DeleteOneID(id int64) *StoreMemberDeleteOne {
+	builder := c.Delete().Where(storemember.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &StoreMemberDeleteOne{builder}
+}
+
+// Query returns a query builder for StoreMember.
+func (c *StoreMemberClient) Query() *StoreMemberQuery {
+	return &StoreMemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeStoreMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a StoreMember entity by its id.
+func (c *StoreMemberClient) Get(ctx context.Context, id int64) (*StoreMember, error) {
+	return c.Query().Where(storemember.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *StoreMemberClient) GetX(ctx context.Context, id int64) *StoreMember {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *StoreMemberClient) Hooks() []Hook {
+	return c.hooks.StoreMember
+}
+
+// Interceptors returns the client interceptors.
+func (c *StoreMemberClient) Interceptors() []Interceptor {
+	return c.inters.StoreMember
+}
+
+func (c *StoreMemberClient) mutate(ctx context.Context, m *StoreMemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&StoreMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&StoreMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&StoreMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&StoreMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown StoreMember mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -762,9 +1046,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		OAuthIdentity, RefreshToken, SmsCode, User []ent.Hook
+		OAuthIdentity, RefreshToken, SmsCode, Store, StoreMember, User []ent.Hook
 	}
 	inters struct {
-		OAuthIdentity, RefreshToken, SmsCode, User []ent.Interceptor
+		OAuthIdentity, RefreshToken, SmsCode, Store, StoreMember, User []ent.Interceptor
 	}
 )

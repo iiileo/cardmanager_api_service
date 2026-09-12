@@ -6,6 +6,8 @@ import (
 	"card_manager/api_service/ent/oauthidentity"
 	"card_manager/api_service/ent/refreshtoken"
 	"card_manager/api_service/ent/smscode"
+	"card_manager/api_service/ent/store"
+	"card_manager/api_service/ent/storemember"
 	"card_manager/api_service/ent/user"
 	"context"
 	"errors"
@@ -79,6 +81,8 @@ func checkColumn(t, c string) error {
 			oauthidentity.Table: oauthidentity.ValidColumn,
 			refreshtoken.Table:  refreshtoken.ValidColumn,
 			smscode.Table:       smscode.ValidColumn,
+			store.Table:         store.ValidColumn,
+			storemember.Table:   storemember.ValidColumn,
 			user.Table:          user.ValidColumn,
 		})
 	})

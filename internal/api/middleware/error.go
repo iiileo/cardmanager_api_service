@@ -17,7 +17,7 @@ func ErrorHandler(log *logger.Logger) gin.HandlerFunc {
 
 		err := c.Errors.Last().Err
 		if appErr, ok := ierr.AsAppError(err); ok {
-			log.Error(c.Request.Context(), "request failed", "error", appErr, "path", c.Request.URL.Path)
+			log.Error(c.Request.Context(), "request failed", "error", err, "path", c.Request.URL.Path)
 			c.JSON(appErr.HTTPStatus(), appErr.ToEnvelope())
 			return
 		}
@@ -25,7 +25,7 @@ func ErrorHandler(log *logger.Logger) gin.HandlerFunc {
 		log.Error(c.Request.Context(), "unhandled error", "error", err, "path", c.Request.URL.Path)
 		c.JSON(http.StatusInternalServerError, ierr.Envelope{
 			Code:    50000,
-			Message: "internal server error",
+			Message: ierr.MsgInternal,
 			Data:    nil,
 		})
 	}

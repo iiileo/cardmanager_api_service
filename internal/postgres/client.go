@@ -61,6 +61,20 @@ func NewEntClient(lc fx.Lifecycle, cfg *config.Config, log *logger.Logger) (*Cli
 	return c, nil
 }
 
+func (c *Client) WithTx(ctx context.Context, fn func(tx *ent.Tx) error) error {
+	tx, err := c.ent.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rerr := tx.Rollback(); rerr != nil {
+			return fmt.Errorf("%w: rollback: %v", err, rerr)
+		}
+		return err
+	}
+	return tx.Commit()
+}
+
 func (c *Client) Ent() *ent.Client {
 	if c == nil {
 		return nil

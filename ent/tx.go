@@ -18,6 +18,10 @@ type Tx struct {
 	RefreshToken *RefreshTokenClient
 	// SmsCode is the client for interacting with the SmsCode builders.
 	SmsCode *SmsCodeClient
+	// Store is the client for interacting with the Store builders.
+	Store *StoreClient
+	// StoreMember is the client for interacting with the StoreMember builders.
+	StoreMember *StoreMemberClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -154,6 +158,8 @@ func (tx *Tx) init() {
 	tx.OAuthIdentity = NewOAuthIdentityClient(tx.config)
 	tx.RefreshToken = NewRefreshTokenClient(tx.config)
 	tx.SmsCode = NewSmsCodeClient(tx.config)
+	tx.Store = NewStoreClient(tx.config)
+	tx.StoreMember = NewStoreMemberClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

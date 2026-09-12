@@ -15,6 +15,17 @@ var (
 	ErrInternal     = errors.New("internal_error")
 )
 
+const (
+	MsgOK           = "成功"
+	MsgBadRequest   = "请求参数有误"
+	MsgUnauthorized = "请先登录"
+	MsgTokenInvalid = "登录已失效，请重新登录"
+	MsgForbidden    = "没有权限执行此操作"
+	MsgNotFound     = "内容不存在"
+	MsgConflict     = "操作冲突，请稍后重试"
+	MsgInternal     = "服务繁忙，请稍后再试"
+)
+
 type Envelope struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -35,6 +46,46 @@ func NewError(msg string) *AppError {
 
 func WithError(err error) *AppError {
 	return &AppError{err: err, msg: err.Error()}
+}
+
+func Validation(msg string) *AppError {
+	return NewError(msg).Mark(ErrValidation)
+}
+
+func Unauthorized(msg string) *AppError {
+	if msg == "" {
+		msg = MsgUnauthorized
+	}
+	return NewError(msg).Mark(ErrUnauthorized)
+}
+
+func Forbidden(msg string) *AppError {
+	if msg == "" {
+		msg = MsgForbidden
+	}
+	return NewError(msg).Mark(ErrForbidden)
+}
+
+func NotFound(msg string) *AppError {
+	if msg == "" {
+		msg = MsgNotFound
+	}
+	return NewError(msg).Mark(ErrNotFound)
+}
+
+func Conflict(msg string) *AppError {
+	if msg == "" {
+		msg = MsgConflict
+	}
+	return NewError(msg).Mark(ErrConflict).WithCode(40900)
+}
+
+func Internal(err error) *AppError {
+	return &AppError{
+		err:    err,
+		msg:    MsgInternal,
+		marked: ErrInternal,
+	}
 }
 
 func (e *AppError) WithHint(hint string) *AppError {
@@ -59,7 +110,7 @@ func (e *AppError) Error() string {
 	if e.err != nil {
 		return e.err.Error()
 	}
-	return "unknown error"
+	return MsgInternal
 }
 
 func (e *AppError) Unwrap() error { return e.err }
@@ -110,15 +161,35 @@ func (e *AppError) HTTPStatus() int {
 	}
 }
 
-func (e *AppError) ToEnvelope() Envelope {
-	data := any(nil)
-	if e.hint != "" {
-		data = map[string]string{"hint": e.hint}
+// UserMessage 返回给前端/普通用户的文案（中文）。
+func (e *AppError) UserMessage() string {
+	if e.Is(ErrInternal) {
+		return MsgInternal
 	}
+	if e.msg != "" {
+		return e.msg
+	}
+	switch {
+	case e.Is(ErrValidation):
+		return MsgBadRequest
+	case e.Is(ErrUnauthorized):
+		return MsgUnauthorized
+	case e.Is(ErrForbidden):
+		return MsgForbidden
+	case e.Is(ErrNotFound):
+		return MsgNotFound
+	case e.Is(ErrConflict):
+		return MsgConflict
+	default:
+		return MsgInternal
+	}
+}
+
+func (e *AppError) ToEnvelope() Envelope {
 	return Envelope{
 		Code:    e.Code(),
-		Message: e.Error(),
-		Data:    data,
+		Message: e.UserMessage(),
+		Data:    nil,
 	}
 }
 

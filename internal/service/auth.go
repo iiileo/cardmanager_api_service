@@ -65,10 +65,10 @@ func (s *authService) SendSMS(ctx context.Context, req dto.SendSMSRequest) (*dto
 	phone := strings.TrimSpace(req.Phone)
 	scene := strings.TrimSpace(req.Scene)
 	if !phoneRE.MatchString(phone) {
-		return nil, ierr.NewError("invalid phone").WithHint("phone must be 11-digit CN mobile").Mark(ierr.ErrValidation)
+		return nil, ierr.Validation("请输入正确的手机号")
 	}
 	if scene != "login" && scene != "bind_phone" {
-		return nil, ierr.NewError("invalid scene").WithHint("scene must be login or bind_phone").Mark(ierr.ErrValidation)
+		return nil, ierr.Validation("验证码场景不正确")
 	}
 
 	code := s.cfg.Auth.SmsDevCode
@@ -76,7 +76,7 @@ func (s *authService) SendSMS(ctx context.Context, req dto.SendSMSRequest) (*dto
 		var err error
 		code, err = auth.RandomDigits(6)
 		if err != nil {
-			return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+			return nil, ierr.Internal(err)
 		}
 	}
 
@@ -87,7 +87,7 @@ func (s *authService) SendSMS(ctx context.Context, req dto.SendSMSRequest) (*dto
 		CodeHash:  auth.HashCode(code),
 		ExpiresAt: expiresAt,
 	}); err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 
 	s.log.Info(ctx, "sms code created", "phone", phone, "scene", scene)
@@ -102,35 +102,35 @@ func (s *authService) LoginSMS(ctx context.Context, req dto.LoginSMSRequest, met
 	phone := strings.TrimSpace(req.Phone)
 	code := strings.TrimSpace(req.Code)
 	if !phoneRE.MatchString(phone) {
-		return nil, ierr.NewError("invalid phone").Mark(ierr.ErrValidation)
+		return nil, ierr.Validation("请输入正确的手机号")
 	}
 	if len(code) != 6 {
-		return nil, ierr.NewError("invalid code").WithHint("code must be 6 digits").Mark(ierr.ErrValidation)
+		return nil, ierr.Validation("请输入6位验证码")
 	}
 
 	record, err := s.sms.FindLatestValid(ctx, phone, "login")
 	if err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 	if record == nil || record.CodeHash != auth.HashCode(code) {
-		return nil, ierr.NewError("invalid or expired code").Mark(ierr.ErrValidation).WithCode(40001)
+		return nil, ierr.Validation("验证码错误或已过期").WithCode(40001)
 	}
 	if err := s.sms.MarkUsed(ctx, record.ID); err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 
 	u, err := s.users.GetByPhone(ctx, phone)
 	if err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 	if u == nil {
 		u, err = s.users.Create(ctx, phone, "")
 		if err != nil {
-			return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+			return nil, ierr.Internal(err)
 		}
 	}
 	if u.Status != 1 {
-		return nil, ierr.NewError("user disabled").Mark(ierr.ErrForbidden)
+		return nil, ierr.Forbidden("账号已被禁用，请联系客服")
 	}
 
 	return s.issueTokens(ctx, u, meta)
@@ -139,26 +139,26 @@ func (s *authService) LoginSMS(ctx context.Context, req dto.LoginSMSRequest, met
 func (s *authService) Refresh(ctx context.Context, refreshToken string, meta LoginMeta) (*dto.TokenResponse, error) {
 	refreshToken = strings.TrimSpace(refreshToken)
 	if refreshToken == "" {
-		return nil, ierr.NewError("refresh_token is required").Mark(ierr.ErrValidation)
+		return nil, ierr.Validation("请提供刷新凭证")
 	}
 	hash := auth.HashToken(refreshToken)
 	stored, err := s.tokens.GetByHash(ctx, hash)
 	if err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 	if stored == nil || stored.RevokedAt != nil || time.Now().UTC().After(stored.ExpiresAt) {
-		return nil, ierr.NewError("refresh token invalid").Mark(ierr.ErrUnauthorized)
+		return nil, ierr.Unauthorized(ierr.MsgTokenInvalid)
 	}
 	if err := s.tokens.Revoke(ctx, stored.ID); err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 
 	u, err := s.users.GetByID(ctx, stored.UserID)
 	if err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 	if u == nil || u.Status != 1 {
-		return nil, ierr.NewError("user not found").Mark(ierr.ErrUnauthorized)
+		return nil, ierr.Unauthorized(ierr.MsgTokenInvalid)
 	}
 	return s.issueTokens(ctx, u, meta)
 }
@@ -167,7 +167,7 @@ func (s *authService) Logout(ctx context.Context, refreshToken string) error {
 	hash := auth.HashToken(strings.TrimSpace(refreshToken))
 	stored, err := s.tokens.GetByHash(ctx, hash)
 	if err != nil {
-		return ierr.WithError(err).Mark(ierr.ErrInternal)
+		return ierr.Internal(err)
 	}
 	if stored == nil {
 		return nil
@@ -175,16 +175,19 @@ func (s *authService) Logout(ctx context.Context, refreshToken string) error {
 	if stored.RevokedAt != nil {
 		return nil
 	}
-	return s.tokens.Revoke(ctx, stored.ID)
+	if err := s.tokens.Revoke(ctx, stored.ID); err != nil {
+		return ierr.Internal(err)
+	}
+	return nil
 }
 
 func (s *authService) Me(ctx context.Context, userID int64) (*dto.UserInfo, error) {
 	u, err := s.users.GetByID(ctx, userID)
 	if err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 	if u == nil {
-		return nil, ierr.NewError("user not found").Mark(ierr.ErrUnauthorized)
+		return nil, ierr.Unauthorized("")
 	}
 	return toUserInfo(u), nil
 }
@@ -192,11 +195,11 @@ func (s *authService) Me(ctx context.Context, userID int64) (*dto.UserInfo, erro
 func (s *authService) UpdateMe(ctx context.Context, userID int64, nickname string) (*dto.UserInfo, error) {
 	nickname = strings.TrimSpace(nickname)
 	if nickname == "" || len([]rune(nickname)) > 32 {
-		return nil, ierr.NewError("invalid nickname").Mark(ierr.ErrValidation)
+		return nil, ierr.Validation("昵称不能为空，且不超过32个字")
 	}
 	u, err := s.users.UpdateNickname(ctx, userID, nickname)
 	if err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 	return toUserInfo(u), nil
 }
@@ -204,11 +207,11 @@ func (s *authService) UpdateMe(ctx context.Context, userID int64, nickname strin
 func (s *authService) issueTokens(ctx context.Context, u *domainuser.User, meta LoginMeta) (*dto.TokenResponse, error) {
 	access, err := s.tm.IssueAccess(u.ID, u.Phone)
 	if err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 	raw, hash, expiresAt, err := s.tm.NewRefreshToken()
 	if err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 
 	in := domainrt.CreateInput{
@@ -226,7 +229,7 @@ func (s *authService) issueTokens(ctx context.Context, u *domainuser.User, meta 
 		in.IP = &meta.IP
 	}
 	if _, err := s.tokens.Create(ctx, in); err != nil {
-		return nil, ierr.WithError(err).Mark(ierr.ErrInternal)
+		return nil, ierr.Internal(err)
 	}
 
 	s.log.Info(ctx, "tokens issued", "user_id", u.ID)

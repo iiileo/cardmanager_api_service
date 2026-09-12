@@ -11,13 +11,13 @@ func RequireAuth(tm *auth.TokenManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		raw := bearer(c)
 		if raw == "" {
-			response.Fail(c, ierr.NewError("unauthorized").Mark(ierr.ErrUnauthorized))
+			response.Fail(c, ierr.Unauthorized(""))
 			c.Abort()
 			return
 		}
 		claims, err := tm.ParseAccess(raw)
 		if err != nil {
-			response.Fail(c, ierr.NewError("token invalid").Mark(ierr.ErrUnauthorized))
+			response.Fail(c, ierr.Unauthorized(ierr.MsgTokenInvalid))
 			c.Abort()
 			return
 		}

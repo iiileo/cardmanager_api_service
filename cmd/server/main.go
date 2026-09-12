@@ -31,11 +31,15 @@ func main() {
 			repository.NewUserRepository,
 			repository.NewRefreshTokenRepository,
 			repository.NewSmsCodeRepository,
+			repository.NewStoreRepository,
+			repository.NewStoreMemberRepository,
 
 			service.NewAuthService,
+			service.NewStoreService,
 
 			v1.NewHealthHandler,
 			v1.NewAuthHandler,
+			v1.NewStoreHandler,
 			api.NewRouter,
 		),
 		fx.Invoke(api.StartServer),

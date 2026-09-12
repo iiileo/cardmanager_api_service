@@ -23,7 +23,7 @@ func NewAuthHandler(svc service.AuthService, tokens *auth.TokenManager, log *log
 func (h *AuthHandler) SendSMS(c *gin.Context) {
 	var req dto.SendSMSRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, ierr.WithError(err).WithHint("invalid request body").Mark(ierr.ErrValidation))
+		response.Fail(c, ierr.Validation(ierr.MsgBadRequest))
 		return
 	}
 	resp, err := h.service.SendSMS(c.Request.Context(), req)
@@ -37,7 +37,7 @@ func (h *AuthHandler) SendSMS(c *gin.Context) {
 func (h *AuthHandler) LoginSMS(c *gin.Context) {
 	var req dto.LoginSMSRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, ierr.WithError(err).WithHint("invalid request body").Mark(ierr.ErrValidation))
+		response.Fail(c, ierr.Validation(ierr.MsgBadRequest))
 		return
 	}
 	resp, err := h.service.LoginSMS(c.Request.Context(), req, loginMeta(c))
@@ -51,7 +51,7 @@ func (h *AuthHandler) LoginSMS(c *gin.Context) {
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, ierr.WithError(err).WithHint("invalid request body").Mark(ierr.ErrValidation))
+		response.Fail(c, ierr.Validation(ierr.MsgBadRequest))
 		return
 	}
 	resp, err := h.service.Refresh(c.Request.Context(), req.RefreshToken, loginMeta(c))
@@ -65,7 +65,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 func (h *AuthHandler) Logout(c *gin.Context) {
 	var req dto.LogoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, ierr.WithError(err).WithHint("invalid request body").Mark(ierr.ErrValidation))
+		response.Fail(c, ierr.Validation(ierr.MsgBadRequest))
 		return
 	}
 	if err := h.service.Logout(c.Request.Context(), req.RefreshToken); err != nil {
@@ -78,7 +78,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 func (h *AuthHandler) Me(c *gin.Context) {
 	userID, ok := currentUserID(c)
 	if !ok {
-		response.Fail(c, ierr.NewError("unauthorized").Mark(ierr.ErrUnauthorized))
+		response.Fail(c, ierr.Unauthorized(""))
 		return
 	}
 	resp, err := h.service.Me(c.Request.Context(), userID)
@@ -92,12 +92,12 @@ func (h *AuthHandler) Me(c *gin.Context) {
 func (h *AuthHandler) UpdateMe(c *gin.Context) {
 	userID, ok := currentUserID(c)
 	if !ok {
-		response.Fail(c, ierr.NewError("unauthorized").Mark(ierr.ErrUnauthorized))
+		response.Fail(c, ierr.Unauthorized(""))
 		return
 	}
 	var req dto.UpdateMeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, ierr.WithError(err).WithHint("invalid request body").Mark(ierr.ErrValidation))
+		response.Fail(c, ierr.Validation(ierr.MsgBadRequest))
 		return
 	}
 	resp, err := h.service.UpdateMe(c.Request.Context(), userID, req.Nickname)

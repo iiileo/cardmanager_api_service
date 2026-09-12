@@ -110,6 +110,74 @@ var (
 			},
 		},
 	}
+	// StoresColumns holds the columns for the "stores" table.
+	StoresColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 64},
+		{Name: "city", Type: field.TypeString, Size: 32},
+		{Name: "address", Type: field.TypeString, Nullable: true, Size: 128},
+		{Name: "open_time", Type: field.TypeString, Size: 5},
+		{Name: "close_time", Type: field.TypeString, Size: 5},
+		{Name: "biz_type", Type: field.TypeString, Nullable: true, Size: 16},
+		{Name: "invite_code", Type: field.TypeString, Unique: true, Size: 6},
+		{Name: "owner_user_id", Type: field.TypeInt64},
+		{Name: "status", Type: field.TypeInt8, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// StoresTable holds the schema information for the "stores" table.
+	StoresTable = &schema.Table{
+		Name:       "stores",
+		Columns:    StoresColumns,
+		PrimaryKey: []*schema.Column{StoresColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "store_invite_code",
+				Unique:  true,
+				Columns: []*schema.Column{StoresColumns[7]},
+			},
+			{
+				Name:    "store_owner_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{StoresColumns[8]},
+			},
+		},
+	}
+	// StoreMembersColumns holds the columns for the "store_members" table.
+	StoreMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "store_id", Type: field.TypeInt64},
+		{Name: "user_id", Type: field.TypeInt64},
+		{Name: "role", Type: field.TypeString, Size: 16},
+		{Name: "status", Type: field.TypeString, Size: 16},
+		{Name: "display_name", Type: field.TypeString, Nullable: true, Size: 32},
+		{Name: "joined_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// StoreMembersTable holds the schema information for the "store_members" table.
+	StoreMembersTable = &schema.Table{
+		Name:       "store_members",
+		Columns:    StoreMembersColumns,
+		PrimaryKey: []*schema.Column{StoreMembersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "storemember_store_id_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{StoreMembersColumns[1], StoreMembersColumns[2]},
+			},
+			{
+				Name:    "storemember_store_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{StoreMembersColumns[1], StoreMembersColumns[4]},
+			},
+			{
+				Name:    "storemember_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{StoreMembersColumns[2]},
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -137,6 +205,8 @@ var (
 		OauthIdentitiesTable,
 		RefreshTokensTable,
 		SmsCodesTable,
+		StoresTable,
+		StoreMembersTable,
 		UsersTable,
 	}
 )
@@ -150,6 +220,12 @@ func init() {
 	}
 	SmsCodesTable.Annotation = &entsql.Annotation{
 		Table: "sms_codes",
+	}
+	StoresTable.Annotation = &entsql.Annotation{
+		Table: "stores",
+	}
+	StoreMembersTable.Annotation = &entsql.Annotation{
+		Table: "store_members",
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",

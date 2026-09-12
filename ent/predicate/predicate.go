@@ -15,5 +15,11 @@ type RefreshToken func(*sql.Selector)
 // SmsCode is the predicate function for smscode builders.
 type SmsCode func(*sql.Selector)
 
+// Store is the predicate function for store builders.
+type Store func(*sql.Selector)
+
+// StoreMember is the predicate function for storemember builders.
+type StoreMember func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

@@ -9,6 +9,7 @@ import (
 	"card_manager/api_service/internal/auth"
 	"card_manager/api_service/internal/config"
 	"card_manager/api_service/internal/logger"
+	"card_manager/api_service/internal/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -23,6 +24,8 @@ func NewRouter(
 	tm *auth.TokenManager,
 	health *v1.HealthHandler,
 	authHandler *v1.AuthHandler,
+	storeHandler *v1.StoreHandler,
+	storeSvc service.StoreService,
 ) *Router {
 	if cfg.Server.Mode == "local" {
 		gin.SetMode(gin.DebugMode)
@@ -50,6 +53,31 @@ func NewRouter(
 			{
 				secured.GET("/me", authHandler.Me)
 				secured.PATCH("/me", authHandler.UpdateMe)
+			}
+		}
+
+		authed := apiV1.Group("")
+		authed.Use(middleware.RequireAuth(tm))
+		{
+			stores := authed.Group("/stores")
+			{
+				stores.GET("", storeHandler.List)
+				stores.POST("", storeHandler.Create)
+				stores.GET("/invite/:code", storeHandler.PreviewInvite)
+				stores.POST("/join", storeHandler.Join)
+				stores.GET("/:id", storeHandler.Get)
+				stores.PATCH("/:id", storeHandler.Update)
+				stores.GET("/:id/invite-code", storeHandler.GetInviteCode)
+				stores.POST("/:id/invite-code/refresh", storeHandler.RefreshInviteCode)
+			}
+
+			staff := authed.Group("/staff")
+			staff.Use(middleware.RequireStore(storeSvc))
+			{
+				staff.GET("", storeHandler.ListStaff)
+				staff.GET("/applications", storeHandler.ListApplications)
+				staff.POST("/applications/:id/approve", middleware.RequireStoreOwner(), storeHandler.Approve)
+				staff.POST("/applications/:id/reject", middleware.RequireStoreOwner(), storeHandler.Reject)
 			}
 		}
 	}

@@ -30,6 +30,5 @@ fmt: ## Format Go code
 vet: ## Vet Go code
 	go vet ./...
 
-tidy: ## Tidy modules and keep toolchain pin
+tidy: ## Tidy modules
 	go mod tidy
-	@grep -q '^toolchain ' go.mod || go mod edit -toolchain=go1.25.0
