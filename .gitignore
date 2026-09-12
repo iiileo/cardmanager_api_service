@@ -1,0 +1,23 @@
+# Binaries
+/bin/
+/dist/
+*.exe
+*.test
+*.out
+
+# Dependencies / generated
+/vendor/
+/docs/swagger/
+
+# Env & IDE
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Coverage
+coverage.out
+coverage.html
