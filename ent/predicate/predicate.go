@@ -9,6 +9,27 @@ import (
 // BizType is the predicate function for biztype builders.
 type BizType func(*sql.Selector)
 
+// CardItemBalance is the predicate function for carditembalance builders.
+type CardItemBalance func(*sql.Selector)
+
+// CardProduct is the predicate function for cardproduct builders.
+type CardProduct func(*sql.Selector)
+
+// CardProductItem is the predicate function for cardproductitem builders.
+type CardProductItem func(*sql.Selector)
+
+// LedgerEntry is the predicate function for ledgerentry builders.
+type LedgerEntry func(*sql.Selector)
+
+// LedgerEntryItem is the predicate function for ledgerentryitem builders.
+type LedgerEntryItem func(*sql.Selector)
+
+// Member is the predicate function for member builders.
+type Member func(*sql.Selector)
+
+// MemberCard is the predicate function for membercard builders.
+type MemberCard func(*sql.Selector)
+
 // OAuthIdentity is the predicate function for oauthidentity builders.
 type OAuthIdentity func(*sql.Selector)
 

@@ -38,6 +38,7 @@ type AppError struct {
 	hint   string
 	marked error
 	code   int
+	data   any
 }
 
 func NewError(msg string) *AppError {
@@ -102,6 +103,13 @@ func (e *AppError) WithCode(code int) *AppError {
 	e.code = code
 	return e
 }
+
+func (e *AppError) WithData(data any) *AppError {
+	e.data = data
+	return e
+}
+
+func (e *AppError) Data() any { return e.data }
 
 func (e *AppError) Error() string {
 	if e.msg != "" {
@@ -189,7 +197,7 @@ func (e *AppError) ToEnvelope() Envelope {
 	return Envelope{
 		Code:    e.Code(),
 		Message: e.UserMessage(),
-		Data:    nil,
+		Data:    e.data,
 	}
 }
 

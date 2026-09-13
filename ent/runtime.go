@@ -4,6 +4,13 @@ package ent
 
 import (
 	"card_manager/api_service/ent/biztype"
+	"card_manager/api_service/ent/carditembalance"
+	"card_manager/api_service/ent/cardproduct"
+	"card_manager/api_service/ent/cardproductitem"
+	"card_manager/api_service/ent/ledgerentry"
+	"card_manager/api_service/ent/ledgerentryitem"
+	"card_manager/api_service/ent/member"
+	"card_manager/api_service/ent/membercard"
 	"card_manager/api_service/ent/oauthidentity"
 	"card_manager/api_service/ent/refreshtoken"
 	"card_manager/api_service/ent/schema"
@@ -74,6 +81,288 @@ func init() {
 	biztype.DefaultUpdatedAt = biztypeDescUpdatedAt.Default.(func() time.Time)
 	// biztype.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	biztype.UpdateDefaultUpdatedAt = biztypeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	carditembalanceFields := schema.CardItemBalance{}.Fields()
+	_ = carditembalanceFields
+	// carditembalanceDescNameSnapshot is the schema descriptor for name_snapshot field.
+	carditembalanceDescNameSnapshot := carditembalanceFields[3].Descriptor()
+	// carditembalance.NameSnapshotValidator is a validator for the "name_snapshot" field. It is called by the builders before save.
+	carditembalance.NameSnapshotValidator = func() func(string) error {
+		validators := carditembalanceDescNameSnapshot.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name_snapshot string) error {
+			for _, fn := range fns {
+				if err := fn(name_snapshot); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// carditembalanceDescCreatedAt is the schema descriptor for created_at field.
+	carditembalanceDescCreatedAt := carditembalanceFields[5].Descriptor()
+	// carditembalance.DefaultCreatedAt holds the default value on creation for the created_at field.
+	carditembalance.DefaultCreatedAt = carditembalanceDescCreatedAt.Default.(func() time.Time)
+	// carditembalanceDescUpdatedAt is the schema descriptor for updated_at field.
+	carditembalanceDescUpdatedAt := carditembalanceFields[6].Descriptor()
+	// carditembalance.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	carditembalance.DefaultUpdatedAt = carditembalanceDescUpdatedAt.Default.(func() time.Time)
+	// carditembalance.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	carditembalance.UpdateDefaultUpdatedAt = carditembalanceDescUpdatedAt.UpdateDefault.(func() time.Time)
+	cardproductFields := schema.CardProduct{}.Fields()
+	_ = cardproductFields
+	// cardproductDescType is the schema descriptor for type field.
+	cardproductDescType := cardproductFields[2].Descriptor()
+	// cardproduct.TypeValidator is a validator for the "type" field. It is called by the builders before save.
+	cardproduct.TypeValidator = func() func(string) error {
+		validators := cardproductDescType.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(_type string) error {
+			for _, fn := range fns {
+				if err := fn(_type); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// cardproductDescName is the schema descriptor for name field.
+	cardproductDescName := cardproductFields[3].Descriptor()
+	// cardproduct.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	cardproduct.NameValidator = func() func(string) error {
+		validators := cardproductDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// cardproductDescPrice is the schema descriptor for price field.
+	cardproductDescPrice := cardproductFields[4].Descriptor()
+	// cardproduct.DefaultPrice holds the default value on creation for the price field.
+	cardproduct.DefaultPrice = cardproductDescPrice.Default.(int)
+	// cardproductDescStatus is the schema descriptor for status field.
+	cardproductDescStatus := cardproductFields[7].Descriptor()
+	// cardproduct.DefaultStatus holds the default value on creation for the status field.
+	cardproduct.DefaultStatus = cardproductDescStatus.Default.(int8)
+	// cardproductDescCreatedAt is the schema descriptor for created_at field.
+	cardproductDescCreatedAt := cardproductFields[8].Descriptor()
+	// cardproduct.DefaultCreatedAt holds the default value on creation for the created_at field.
+	cardproduct.DefaultCreatedAt = cardproductDescCreatedAt.Default.(func() time.Time)
+	// cardproductDescUpdatedAt is the schema descriptor for updated_at field.
+	cardproductDescUpdatedAt := cardproductFields[9].Descriptor()
+	// cardproduct.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	cardproduct.DefaultUpdatedAt = cardproductDescUpdatedAt.Default.(func() time.Time)
+	// cardproduct.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	cardproduct.UpdateDefaultUpdatedAt = cardproductDescUpdatedAt.UpdateDefault.(func() time.Time)
+	cardproductitemFields := schema.CardProductItem{}.Fields()
+	_ = cardproductitemFields
+	// cardproductitemDescName is the schema descriptor for name field.
+	cardproductitemDescName := cardproductitemFields[2].Descriptor()
+	// cardproductitem.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	cardproductitem.NameValidator = func() func(string) error {
+		validators := cardproductitemDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// cardproductitemDescSort is the schema descriptor for sort field.
+	cardproductitemDescSort := cardproductitemFields[4].Descriptor()
+	// cardproductitem.DefaultSort holds the default value on creation for the sort field.
+	cardproductitem.DefaultSort = cardproductitemDescSort.Default.(int)
+	// cardproductitemDescCreatedAt is the schema descriptor for created_at field.
+	cardproductitemDescCreatedAt := cardproductitemFields[5].Descriptor()
+	// cardproductitem.DefaultCreatedAt holds the default value on creation for the created_at field.
+	cardproductitem.DefaultCreatedAt = cardproductitemDescCreatedAt.Default.(func() time.Time)
+	// cardproductitemDescUpdatedAt is the schema descriptor for updated_at field.
+	cardproductitemDescUpdatedAt := cardproductitemFields[6].Descriptor()
+	// cardproductitem.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	cardproductitem.DefaultUpdatedAt = cardproductitemDescUpdatedAt.Default.(func() time.Time)
+	// cardproductitem.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	cardproductitem.UpdateDefaultUpdatedAt = cardproductitemDescUpdatedAt.UpdateDefault.(func() time.Time)
+	ledgerentryFields := schema.LedgerEntry{}.Fields()
+	_ = ledgerentryFields
+	// ledgerentryDescType is the schema descriptor for type field.
+	ledgerentryDescType := ledgerentryFields[4].Descriptor()
+	// ledgerentry.TypeValidator is a validator for the "type" field. It is called by the builders before save.
+	ledgerentry.TypeValidator = func() func(string) error {
+		validators := ledgerentryDescType.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(_type string) error {
+			for _, fn := range fns {
+				if err := fn(_type); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// ledgerentryDescItemName is the schema descriptor for item_name field.
+	ledgerentryDescItemName := ledgerentryFields[7].Descriptor()
+	// ledgerentry.ItemNameValidator is a validator for the "item_name" field. It is called by the builders before save.
+	ledgerentry.ItemNameValidator = ledgerentryDescItemName.Validators[0].(func(string) error)
+	// ledgerentryDescRemark is the schema descriptor for remark field.
+	ledgerentryDescRemark := ledgerentryFields[10].Descriptor()
+	// ledgerentry.RemarkValidator is a validator for the "remark" field. It is called by the builders before save.
+	ledgerentry.RemarkValidator = ledgerentryDescRemark.Validators[0].(func(string) error)
+	// ledgerentryDescCreatedAt is the schema descriptor for created_at field.
+	ledgerentryDescCreatedAt := ledgerentryFields[12].Descriptor()
+	// ledgerentry.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ledgerentry.DefaultCreatedAt = ledgerentryDescCreatedAt.Default.(func() time.Time)
+	ledgerentryitemFields := schema.LedgerEntryItem{}.Fields()
+	_ = ledgerentryitemFields
+	// ledgerentryitemDescNameSnapshot is the schema descriptor for name_snapshot field.
+	ledgerentryitemDescNameSnapshot := ledgerentryitemFields[4].Descriptor()
+	// ledgerentryitem.NameSnapshotValidator is a validator for the "name_snapshot" field. It is called by the builders before save.
+	ledgerentryitem.NameSnapshotValidator = func() func(string) error {
+		validators := ledgerentryitemDescNameSnapshot.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name_snapshot string) error {
+			for _, fn := range fns {
+				if err := fn(name_snapshot); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	memberFields := schema.Member{}.Fields()
+	_ = memberFields
+	// memberDescName is the schema descriptor for name field.
+	memberDescName := memberFields[2].Descriptor()
+	// member.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	member.NameValidator = func() func(string) error {
+		validators := memberDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// memberDescPhone is the schema descriptor for phone field.
+	memberDescPhone := memberFields[3].Descriptor()
+	// member.PhoneValidator is a validator for the "phone" field. It is called by the builders before save.
+	member.PhoneValidator = func() func(string) error {
+		validators := memberDescPhone.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(phone string) error {
+			for _, fn := range fns {
+				if err := fn(phone); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// memberDescSource is the schema descriptor for source field.
+	memberDescSource := memberFields[4].Descriptor()
+	// member.SourceValidator is a validator for the "source" field. It is called by the builders before save.
+	member.SourceValidator = memberDescSource.Validators[0].(func(string) error)
+	// memberDescCreatedAt is the schema descriptor for created_at field.
+	memberDescCreatedAt := memberFields[5].Descriptor()
+	// member.DefaultCreatedAt holds the default value on creation for the created_at field.
+	member.DefaultCreatedAt = memberDescCreatedAt.Default.(func() time.Time)
+	// memberDescUpdatedAt is the schema descriptor for updated_at field.
+	memberDescUpdatedAt := memberFields[6].Descriptor()
+	// member.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	member.DefaultUpdatedAt = memberDescUpdatedAt.Default.(func() time.Time)
+	// member.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	member.UpdateDefaultUpdatedAt = memberDescUpdatedAt.UpdateDefault.(func() time.Time)
+	membercardFields := schema.MemberCard{}.Fields()
+	_ = membercardFields
+	// membercardDescType is the schema descriptor for type field.
+	membercardDescType := membercardFields[4].Descriptor()
+	// membercard.TypeValidator is a validator for the "type" field. It is called by the builders before save.
+	membercard.TypeValidator = func() func(string) error {
+		validators := membercardDescType.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(_type string) error {
+			for _, fn := range fns {
+				if err := fn(_type); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// membercardDescNameSnapshot is the schema descriptor for name_snapshot field.
+	membercardDescNameSnapshot := membercardFields[5].Descriptor()
+	// membercard.NameSnapshotValidator is a validator for the "name_snapshot" field. It is called by the builders before save.
+	membercard.NameSnapshotValidator = func() func(string) error {
+		validators := membercardDescNameSnapshot.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name_snapshot string) error {
+			for _, fn := range fns {
+				if err := fn(name_snapshot); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// membercardDescBalance is the schema descriptor for balance field.
+	membercardDescBalance := membercardFields[6].Descriptor()
+	// membercard.DefaultBalance holds the default value on creation for the balance field.
+	membercard.DefaultBalance = membercardDescBalance.Default.(int)
+	// membercardDescStatus is the schema descriptor for status field.
+	membercardDescStatus := membercardFields[10].Descriptor()
+	// membercard.DefaultStatus holds the default value on creation for the status field.
+	membercard.DefaultStatus = membercardDescStatus.Default.(string)
+	// membercard.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	membercard.StatusValidator = membercardDescStatus.Validators[0].(func(string) error)
+	// membercardDescCreatedAt is the schema descriptor for created_at field.
+	membercardDescCreatedAt := membercardFields[12].Descriptor()
+	// membercard.DefaultCreatedAt holds the default value on creation for the created_at field.
+	membercard.DefaultCreatedAt = membercardDescCreatedAt.Default.(func() time.Time)
+	// membercardDescUpdatedAt is the schema descriptor for updated_at field.
+	membercardDescUpdatedAt := membercardFields[13].Descriptor()
+	// membercard.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	membercard.DefaultUpdatedAt = membercardDescUpdatedAt.Default.(func() time.Time)
+	// membercard.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	membercard.UpdateDefaultUpdatedAt = membercardDescUpdatedAt.UpdateDefault.(func() time.Time)
 	oauthidentityFields := schema.OAuthIdentity{}.Fields()
 	_ = oauthidentityFields
 	// oauthidentityDescProvider is the schema descriptor for provider field.

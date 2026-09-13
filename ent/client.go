@@ -12,6 +12,13 @@ import (
 	"card_manager/api_service/ent/migrate"
 
 	"card_manager/api_service/ent/biztype"
+	"card_manager/api_service/ent/carditembalance"
+	"card_manager/api_service/ent/cardproduct"
+	"card_manager/api_service/ent/cardproductitem"
+	"card_manager/api_service/ent/ledgerentry"
+	"card_manager/api_service/ent/ledgerentryitem"
+	"card_manager/api_service/ent/member"
+	"card_manager/api_service/ent/membercard"
 	"card_manager/api_service/ent/oauthidentity"
 	"card_manager/api_service/ent/refreshtoken"
 	"card_manager/api_service/ent/smscode"
@@ -22,6 +29,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -31,6 +39,20 @@ type Client struct {
 	Schema *migrate.Schema
 	// BizType is the client for interacting with the BizType builders.
 	BizType *BizTypeClient
+	// CardItemBalance is the client for interacting with the CardItemBalance builders.
+	CardItemBalance *CardItemBalanceClient
+	// CardProduct is the client for interacting with the CardProduct builders.
+	CardProduct *CardProductClient
+	// CardProductItem is the client for interacting with the CardProductItem builders.
+	CardProductItem *CardProductItemClient
+	// LedgerEntry is the client for interacting with the LedgerEntry builders.
+	LedgerEntry *LedgerEntryClient
+	// LedgerEntryItem is the client for interacting with the LedgerEntryItem builders.
+	LedgerEntryItem *LedgerEntryItemClient
+	// Member is the client for interacting with the Member builders.
+	Member *MemberClient
+	// MemberCard is the client for interacting with the MemberCard builders.
+	MemberCard *MemberCardClient
 	// OAuthIdentity is the client for interacting with the OAuthIdentity builders.
 	OAuthIdentity *OAuthIdentityClient
 	// RefreshToken is the client for interacting with the RefreshToken builders.
@@ -55,6 +77,13 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.BizType = NewBizTypeClient(c.config)
+	c.CardItemBalance = NewCardItemBalanceClient(c.config)
+	c.CardProduct = NewCardProductClient(c.config)
+	c.CardProductItem = NewCardProductItemClient(c.config)
+	c.LedgerEntry = NewLedgerEntryClient(c.config)
+	c.LedgerEntryItem = NewLedgerEntryItemClient(c.config)
+	c.Member = NewMemberClient(c.config)
+	c.MemberCard = NewMemberCardClient(c.config)
 	c.OAuthIdentity = NewOAuthIdentityClient(c.config)
 	c.RefreshToken = NewRefreshTokenClient(c.config)
 	c.SmsCode = NewSmsCodeClient(c.config)
@@ -151,15 +180,22 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:           ctx,
-		config:        cfg,
-		BizType:       NewBizTypeClient(cfg),
-		OAuthIdentity: NewOAuthIdentityClient(cfg),
-		RefreshToken:  NewRefreshTokenClient(cfg),
-		SmsCode:       NewSmsCodeClient(cfg),
-		Store:         NewStoreClient(cfg),
-		StoreMember:   NewStoreMemberClient(cfg),
-		User:          NewUserClient(cfg),
+		ctx:             ctx,
+		config:          cfg,
+		BizType:         NewBizTypeClient(cfg),
+		CardItemBalance: NewCardItemBalanceClient(cfg),
+		CardProduct:     NewCardProductClient(cfg),
+		CardProductItem: NewCardProductItemClient(cfg),
+		LedgerEntry:     NewLedgerEntryClient(cfg),
+		LedgerEntryItem: NewLedgerEntryItemClient(cfg),
+		Member:          NewMemberClient(cfg),
+		MemberCard:      NewMemberCardClient(cfg),
+		OAuthIdentity:   NewOAuthIdentityClient(cfg),
+		RefreshToken:    NewRefreshTokenClient(cfg),
+		SmsCode:         NewSmsCodeClient(cfg),
+		Store:           NewStoreClient(cfg),
+		StoreMember:     NewStoreMemberClient(cfg),
+		User:            NewUserClient(cfg),
 	}, nil
 }
 
@@ -177,15 +213,22 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:           ctx,
-		config:        cfg,
-		BizType:       NewBizTypeClient(cfg),
-		OAuthIdentity: NewOAuthIdentityClient(cfg),
-		RefreshToken:  NewRefreshTokenClient(cfg),
-		SmsCode:       NewSmsCodeClient(cfg),
-		Store:         NewStoreClient(cfg),
-		StoreMember:   NewStoreMemberClient(cfg),
-		User:          NewUserClient(cfg),
+		ctx:             ctx,
+		config:          cfg,
+		BizType:         NewBizTypeClient(cfg),
+		CardItemBalance: NewCardItemBalanceClient(cfg),
+		CardProduct:     NewCardProductClient(cfg),
+		CardProductItem: NewCardProductItemClient(cfg),
+		LedgerEntry:     NewLedgerEntryClient(cfg),
+		LedgerEntryItem: NewLedgerEntryItemClient(cfg),
+		Member:          NewMemberClient(cfg),
+		MemberCard:      NewMemberCardClient(cfg),
+		OAuthIdentity:   NewOAuthIdentityClient(cfg),
+		RefreshToken:    NewRefreshTokenClient(cfg),
+		SmsCode:         NewSmsCodeClient(cfg),
+		Store:           NewStoreClient(cfg),
+		StoreMember:     NewStoreMemberClient(cfg),
+		User:            NewUserClient(cfg),
 	}, nil
 }
 
@@ -215,8 +258,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.BizType, c.OAuthIdentity, c.RefreshToken, c.SmsCode, c.Store, c.StoreMember,
-		c.User,
+		c.BizType, c.CardItemBalance, c.CardProduct, c.CardProductItem, c.LedgerEntry,
+		c.LedgerEntryItem, c.Member, c.MemberCard, c.OAuthIdentity, c.RefreshToken,
+		c.SmsCode, c.Store, c.StoreMember, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -226,8 +270,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.BizType, c.OAuthIdentity, c.RefreshToken, c.SmsCode, c.Store, c.StoreMember,
-		c.User,
+		c.BizType, c.CardItemBalance, c.CardProduct, c.CardProductItem, c.LedgerEntry,
+		c.LedgerEntryItem, c.Member, c.MemberCard, c.OAuthIdentity, c.RefreshToken,
+		c.SmsCode, c.Store, c.StoreMember, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -238,6 +283,20 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *BizTypeMutation:
 		return c.BizType.mutate(ctx, m)
+	case *CardItemBalanceMutation:
+		return c.CardItemBalance.mutate(ctx, m)
+	case *CardProductMutation:
+		return c.CardProduct.mutate(ctx, m)
+	case *CardProductItemMutation:
+		return c.CardProductItem.mutate(ctx, m)
+	case *LedgerEntryMutation:
+		return c.LedgerEntry.mutate(ctx, m)
+	case *LedgerEntryItemMutation:
+		return c.LedgerEntryItem.mutate(ctx, m)
+	case *MemberMutation:
+		return c.Member.mutate(ctx, m)
+	case *MemberCardMutation:
+		return c.MemberCard.mutate(ctx, m)
 	case *OAuthIdentityMutation:
 		return c.OAuthIdentity.mutate(ctx, m)
 	case *RefreshTokenMutation:
@@ -385,6 +444,1129 @@ func (c *BizTypeClient) mutate(ctx context.Context, m *BizTypeMutation) (Value, 
 		return (&BizTypeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown BizType mutation op: %q", m.Op())
+	}
+}
+
+// CardItemBalanceClient is a client for the CardItemBalance schema.
+type CardItemBalanceClient struct {
+	config
+}
+
+// NewCardItemBalanceClient returns a client for the CardItemBalance from the given config.
+func NewCardItemBalanceClient(c config) *CardItemBalanceClient {
+	return &CardItemBalanceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `carditembalance.Hooks(f(g(h())))`.
+func (c *CardItemBalanceClient) Use(hooks ...Hook) {
+	c.hooks.CardItemBalance = append(c.hooks.CardItemBalance, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `carditembalance.Intercept(f(g(h())))`.
+func (c *CardItemBalanceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CardItemBalance = append(c.inters.CardItemBalance, interceptors...)
+}
+
+// Create returns a builder for creating a CardItemBalance entity.
+func (c *CardItemBalanceClient) Create() *CardItemBalanceCreate {
+	mutation := newCardItemBalanceMutation(c.config, OpCreate)
+	return &CardItemBalanceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CardItemBalance entities.
+func (c *CardItemBalanceClient) CreateBulk(builders ...*CardItemBalanceCreate) *CardItemBalanceCreateBulk {
+	return &CardItemBalanceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CardItemBalanceClient) MapCreateBulk(slice any, setFunc func(*CardItemBalanceCreate, int)) *CardItemBalanceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CardItemBalanceCreateBulk{err: fmt.Errorf("calling to CardItemBalanceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CardItemBalanceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CardItemBalanceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CardItemBalance.
+func (c *CardItemBalanceClient) Update() *CardItemBalanceUpdate {
+	mutation := newCardItemBalanceMutation(c.config, OpUpdate)
+	return &CardItemBalanceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CardItemBalanceClient) UpdateOne(_m *CardItemBalance) *CardItemBalanceUpdateOne {
+	mutation := newCardItemBalanceMutation(c.config, OpUpdateOne, withCardItemBalance(_m))
+	return &CardItemBalanceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CardItemBalanceClient) UpdateOneID(id int64) *CardItemBalanceUpdateOne {
+	mutation := newCardItemBalanceMutation(c.config, OpUpdateOne, withCardItemBalanceID(id))
+	return &CardItemBalanceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CardItemBalance.
+func (c *CardItemBalanceClient) Delete() *CardItemBalanceDelete {
+	mutation := newCardItemBalanceMutation(c.config, OpDelete)
+	return &CardItemBalanceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CardItemBalanceClient) DeleteOne(_m *CardItemBalance) *CardItemBalanceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CardItemBalanceClient) DeleteOneID(id int64) *CardItemBalanceDeleteOne {
+	builder := c.Delete().Where(carditembalance.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CardItemBalanceDeleteOne{builder}
+}
+
+// Query returns a query builder for CardItemBalance.
+func (c *CardItemBalanceClient) Query() *CardItemBalanceQuery {
+	return &CardItemBalanceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCardItemBalance},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CardItemBalance entity by its id.
+func (c *CardItemBalanceClient) Get(ctx context.Context, id int64) (*CardItemBalance, error) {
+	return c.Query().Where(carditembalance.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CardItemBalanceClient) GetX(ctx context.Context, id int64) *CardItemBalance {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryCard queries the card edge of a CardItemBalance.
+func (c *CardItemBalanceClient) QueryCard(_m *CardItemBalance) *MemberCardQuery {
+	query := (&MemberCardClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(carditembalance.Table, carditembalance.FieldID, id),
+			sqlgraph.To(membercard.Table, membercard.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, carditembalance.CardTable, carditembalance.CardColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CardItemBalanceClient) Hooks() []Hook {
+	return c.hooks.CardItemBalance
+}
+
+// Interceptors returns the client interceptors.
+func (c *CardItemBalanceClient) Interceptors() []Interceptor {
+	return c.inters.CardItemBalance
+}
+
+func (c *CardItemBalanceClient) mutate(ctx context.Context, m *CardItemBalanceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CardItemBalanceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CardItemBalanceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CardItemBalanceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CardItemBalanceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CardItemBalance mutation op: %q", m.Op())
+	}
+}
+
+// CardProductClient is a client for the CardProduct schema.
+type CardProductClient struct {
+	config
+}
+
+// NewCardProductClient returns a client for the CardProduct from the given config.
+func NewCardProductClient(c config) *CardProductClient {
+	return &CardProductClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `cardproduct.Hooks(f(g(h())))`.
+func (c *CardProductClient) Use(hooks ...Hook) {
+	c.hooks.CardProduct = append(c.hooks.CardProduct, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `cardproduct.Intercept(f(g(h())))`.
+func (c *CardProductClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CardProduct = append(c.inters.CardProduct, interceptors...)
+}
+
+// Create returns a builder for creating a CardProduct entity.
+func (c *CardProductClient) Create() *CardProductCreate {
+	mutation := newCardProductMutation(c.config, OpCreate)
+	return &CardProductCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CardProduct entities.
+func (c *CardProductClient) CreateBulk(builders ...*CardProductCreate) *CardProductCreateBulk {
+	return &CardProductCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CardProductClient) MapCreateBulk(slice any, setFunc func(*CardProductCreate, int)) *CardProductCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CardProductCreateBulk{err: fmt.Errorf("calling to CardProductClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CardProductCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CardProductCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CardProduct.
+func (c *CardProductClient) Update() *CardProductUpdate {
+	mutation := newCardProductMutation(c.config, OpUpdate)
+	return &CardProductUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CardProductClient) UpdateOne(_m *CardProduct) *CardProductUpdateOne {
+	mutation := newCardProductMutation(c.config, OpUpdateOne, withCardProduct(_m))
+	return &CardProductUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CardProductClient) UpdateOneID(id int64) *CardProductUpdateOne {
+	mutation := newCardProductMutation(c.config, OpUpdateOne, withCardProductID(id))
+	return &CardProductUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CardProduct.
+func (c *CardProductClient) Delete() *CardProductDelete {
+	mutation := newCardProductMutation(c.config, OpDelete)
+	return &CardProductDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CardProductClient) DeleteOne(_m *CardProduct) *CardProductDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CardProductClient) DeleteOneID(id int64) *CardProductDeleteOne {
+	builder := c.Delete().Where(cardproduct.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CardProductDeleteOne{builder}
+}
+
+// Query returns a query builder for CardProduct.
+func (c *CardProductClient) Query() *CardProductQuery {
+	return &CardProductQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCardProduct},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CardProduct entity by its id.
+func (c *CardProductClient) Get(ctx context.Context, id int64) (*CardProduct, error) {
+	return c.Query().Where(cardproduct.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CardProductClient) GetX(ctx context.Context, id int64) *CardProduct {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryItems queries the items edge of a CardProduct.
+func (c *CardProductClient) QueryItems(_m *CardProduct) *CardProductItemQuery {
+	query := (&CardProductItemClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(cardproduct.Table, cardproduct.FieldID, id),
+			sqlgraph.To(cardproductitem.Table, cardproductitem.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, cardproduct.ItemsTable, cardproduct.ItemsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CardProductClient) Hooks() []Hook {
+	return c.hooks.CardProduct
+}
+
+// Interceptors returns the client interceptors.
+func (c *CardProductClient) Interceptors() []Interceptor {
+	return c.inters.CardProduct
+}
+
+func (c *CardProductClient) mutate(ctx context.Context, m *CardProductMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CardProductCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CardProductUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CardProductUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CardProductDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CardProduct mutation op: %q", m.Op())
+	}
+}
+
+// CardProductItemClient is a client for the CardProductItem schema.
+type CardProductItemClient struct {
+	config
+}
+
+// NewCardProductItemClient returns a client for the CardProductItem from the given config.
+func NewCardProductItemClient(c config) *CardProductItemClient {
+	return &CardProductItemClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `cardproductitem.Hooks(f(g(h())))`.
+func (c *CardProductItemClient) Use(hooks ...Hook) {
+	c.hooks.CardProductItem = append(c.hooks.CardProductItem, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `cardproductitem.Intercept(f(g(h())))`.
+func (c *CardProductItemClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CardProductItem = append(c.inters.CardProductItem, interceptors...)
+}
+
+// Create returns a builder for creating a CardProductItem entity.
+func (c *CardProductItemClient) Create() *CardProductItemCreate {
+	mutation := newCardProductItemMutation(c.config, OpCreate)
+	return &CardProductItemCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CardProductItem entities.
+func (c *CardProductItemClient) CreateBulk(builders ...*CardProductItemCreate) *CardProductItemCreateBulk {
+	return &CardProductItemCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CardProductItemClient) MapCreateBulk(slice any, setFunc func(*CardProductItemCreate, int)) *CardProductItemCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CardProductItemCreateBulk{err: fmt.Errorf("calling to CardProductItemClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CardProductItemCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CardProductItemCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CardProductItem.
+func (c *CardProductItemClient) Update() *CardProductItemUpdate {
+	mutation := newCardProductItemMutation(c.config, OpUpdate)
+	return &CardProductItemUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CardProductItemClient) UpdateOne(_m *CardProductItem) *CardProductItemUpdateOne {
+	mutation := newCardProductItemMutation(c.config, OpUpdateOne, withCardProductItem(_m))
+	return &CardProductItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CardProductItemClient) UpdateOneID(id int64) *CardProductItemUpdateOne {
+	mutation := newCardProductItemMutation(c.config, OpUpdateOne, withCardProductItemID(id))
+	return &CardProductItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CardProductItem.
+func (c *CardProductItemClient) Delete() *CardProductItemDelete {
+	mutation := newCardProductItemMutation(c.config, OpDelete)
+	return &CardProductItemDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CardProductItemClient) DeleteOne(_m *CardProductItem) *CardProductItemDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CardProductItemClient) DeleteOneID(id int64) *CardProductItemDeleteOne {
+	builder := c.Delete().Where(cardproductitem.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CardProductItemDeleteOne{builder}
+}
+
+// Query returns a query builder for CardProductItem.
+func (c *CardProductItemClient) Query() *CardProductItemQuery {
+	return &CardProductItemQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCardProductItem},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CardProductItem entity by its id.
+func (c *CardProductItemClient) Get(ctx context.Context, id int64) (*CardProductItem, error) {
+	return c.Query().Where(cardproductitem.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CardProductItemClient) GetX(ctx context.Context, id int64) *CardProductItem {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryProduct queries the product edge of a CardProductItem.
+func (c *CardProductItemClient) QueryProduct(_m *CardProductItem) *CardProductQuery {
+	query := (&CardProductClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(cardproductitem.Table, cardproductitem.FieldID, id),
+			sqlgraph.To(cardproduct.Table, cardproduct.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, cardproductitem.ProductTable, cardproductitem.ProductColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CardProductItemClient) Hooks() []Hook {
+	return c.hooks.CardProductItem
+}
+
+// Interceptors returns the client interceptors.
+func (c *CardProductItemClient) Interceptors() []Interceptor {
+	return c.inters.CardProductItem
+}
+
+func (c *CardProductItemClient) mutate(ctx context.Context, m *CardProductItemMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CardProductItemCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CardProductItemUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CardProductItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CardProductItemDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CardProductItem mutation op: %q", m.Op())
+	}
+}
+
+// LedgerEntryClient is a client for the LedgerEntry schema.
+type LedgerEntryClient struct {
+	config
+}
+
+// NewLedgerEntryClient returns a client for the LedgerEntry from the given config.
+func NewLedgerEntryClient(c config) *LedgerEntryClient {
+	return &LedgerEntryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ledgerentry.Hooks(f(g(h())))`.
+func (c *LedgerEntryClient) Use(hooks ...Hook) {
+	c.hooks.LedgerEntry = append(c.hooks.LedgerEntry, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ledgerentry.Intercept(f(g(h())))`.
+func (c *LedgerEntryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.LedgerEntry = append(c.inters.LedgerEntry, interceptors...)
+}
+
+// Create returns a builder for creating a LedgerEntry entity.
+func (c *LedgerEntryClient) Create() *LedgerEntryCreate {
+	mutation := newLedgerEntryMutation(c.config, OpCreate)
+	return &LedgerEntryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LedgerEntry entities.
+func (c *LedgerEntryClient) CreateBulk(builders ...*LedgerEntryCreate) *LedgerEntryCreateBulk {
+	return &LedgerEntryCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LedgerEntryClient) MapCreateBulk(slice any, setFunc func(*LedgerEntryCreate, int)) *LedgerEntryCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LedgerEntryCreateBulk{err: fmt.Errorf("calling to LedgerEntryClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LedgerEntryCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LedgerEntryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LedgerEntry.
+func (c *LedgerEntryClient) Update() *LedgerEntryUpdate {
+	mutation := newLedgerEntryMutation(c.config, OpUpdate)
+	return &LedgerEntryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LedgerEntryClient) UpdateOne(_m *LedgerEntry) *LedgerEntryUpdateOne {
+	mutation := newLedgerEntryMutation(c.config, OpUpdateOne, withLedgerEntry(_m))
+	return &LedgerEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LedgerEntryClient) UpdateOneID(id int64) *LedgerEntryUpdateOne {
+	mutation := newLedgerEntryMutation(c.config, OpUpdateOne, withLedgerEntryID(id))
+	return &LedgerEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LedgerEntry.
+func (c *LedgerEntryClient) Delete() *LedgerEntryDelete {
+	mutation := newLedgerEntryMutation(c.config, OpDelete)
+	return &LedgerEntryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LedgerEntryClient) DeleteOne(_m *LedgerEntry) *LedgerEntryDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LedgerEntryClient) DeleteOneID(id int64) *LedgerEntryDeleteOne {
+	builder := c.Delete().Where(ledgerentry.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LedgerEntryDeleteOne{builder}
+}
+
+// Query returns a query builder for LedgerEntry.
+func (c *LedgerEntryClient) Query() *LedgerEntryQuery {
+	return &LedgerEntryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLedgerEntry},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a LedgerEntry entity by its id.
+func (c *LedgerEntryClient) Get(ctx context.Context, id int64) (*LedgerEntry, error) {
+	return c.Query().Where(ledgerentry.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LedgerEntryClient) GetX(ctx context.Context, id int64) *LedgerEntry {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryMember queries the member edge of a LedgerEntry.
+func (c *LedgerEntryClient) QueryMember(_m *LedgerEntry) *MemberQuery {
+	query := (&MemberClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ledgerentry.Table, ledgerentry.FieldID, id),
+			sqlgraph.To(member.Table, member.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ledgerentry.MemberTable, ledgerentry.MemberColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCard queries the card edge of a LedgerEntry.
+func (c *LedgerEntryClient) QueryCard(_m *LedgerEntry) *MemberCardQuery {
+	query := (&MemberCardClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ledgerentry.Table, ledgerentry.FieldID, id),
+			sqlgraph.To(membercard.Table, membercard.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ledgerentry.CardTable, ledgerentry.CardColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryItems queries the items edge of a LedgerEntry.
+func (c *LedgerEntryClient) QueryItems(_m *LedgerEntry) *LedgerEntryItemQuery {
+	query := (&LedgerEntryItemClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ledgerentry.Table, ledgerentry.FieldID, id),
+			sqlgraph.To(ledgerentryitem.Table, ledgerentryitem.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ledgerentry.ItemsTable, ledgerentry.ItemsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LedgerEntryClient) Hooks() []Hook {
+	return c.hooks.LedgerEntry
+}
+
+// Interceptors returns the client interceptors.
+func (c *LedgerEntryClient) Interceptors() []Interceptor {
+	return c.inters.LedgerEntry
+}
+
+func (c *LedgerEntryClient) mutate(ctx context.Context, m *LedgerEntryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LedgerEntryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LedgerEntryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LedgerEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LedgerEntryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown LedgerEntry mutation op: %q", m.Op())
+	}
+}
+
+// LedgerEntryItemClient is a client for the LedgerEntryItem schema.
+type LedgerEntryItemClient struct {
+	config
+}
+
+// NewLedgerEntryItemClient returns a client for the LedgerEntryItem from the given config.
+func NewLedgerEntryItemClient(c config) *LedgerEntryItemClient {
+	return &LedgerEntryItemClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ledgerentryitem.Hooks(f(g(h())))`.
+func (c *LedgerEntryItemClient) Use(hooks ...Hook) {
+	c.hooks.LedgerEntryItem = append(c.hooks.LedgerEntryItem, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ledgerentryitem.Intercept(f(g(h())))`.
+func (c *LedgerEntryItemClient) Intercept(interceptors ...Interceptor) {
+	c.inters.LedgerEntryItem = append(c.inters.LedgerEntryItem, interceptors...)
+}
+
+// Create returns a builder for creating a LedgerEntryItem entity.
+func (c *LedgerEntryItemClient) Create() *LedgerEntryItemCreate {
+	mutation := newLedgerEntryItemMutation(c.config, OpCreate)
+	return &LedgerEntryItemCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LedgerEntryItem entities.
+func (c *LedgerEntryItemClient) CreateBulk(builders ...*LedgerEntryItemCreate) *LedgerEntryItemCreateBulk {
+	return &LedgerEntryItemCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LedgerEntryItemClient) MapCreateBulk(slice any, setFunc func(*LedgerEntryItemCreate, int)) *LedgerEntryItemCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LedgerEntryItemCreateBulk{err: fmt.Errorf("calling to LedgerEntryItemClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LedgerEntryItemCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LedgerEntryItemCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LedgerEntryItem.
+func (c *LedgerEntryItemClient) Update() *LedgerEntryItemUpdate {
+	mutation := newLedgerEntryItemMutation(c.config, OpUpdate)
+	return &LedgerEntryItemUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LedgerEntryItemClient) UpdateOne(_m *LedgerEntryItem) *LedgerEntryItemUpdateOne {
+	mutation := newLedgerEntryItemMutation(c.config, OpUpdateOne, withLedgerEntryItem(_m))
+	return &LedgerEntryItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LedgerEntryItemClient) UpdateOneID(id int64) *LedgerEntryItemUpdateOne {
+	mutation := newLedgerEntryItemMutation(c.config, OpUpdateOne, withLedgerEntryItemID(id))
+	return &LedgerEntryItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LedgerEntryItem.
+func (c *LedgerEntryItemClient) Delete() *LedgerEntryItemDelete {
+	mutation := newLedgerEntryItemMutation(c.config, OpDelete)
+	return &LedgerEntryItemDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LedgerEntryItemClient) DeleteOne(_m *LedgerEntryItem) *LedgerEntryItemDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LedgerEntryItemClient) DeleteOneID(id int64) *LedgerEntryItemDeleteOne {
+	builder := c.Delete().Where(ledgerentryitem.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LedgerEntryItemDeleteOne{builder}
+}
+
+// Query returns a query builder for LedgerEntryItem.
+func (c *LedgerEntryItemClient) Query() *LedgerEntryItemQuery {
+	return &LedgerEntryItemQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLedgerEntryItem},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a LedgerEntryItem entity by its id.
+func (c *LedgerEntryItemClient) Get(ctx context.Context, id int64) (*LedgerEntryItem, error) {
+	return c.Query().Where(ledgerentryitem.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LedgerEntryItemClient) GetX(ctx context.Context, id int64) *LedgerEntryItem {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryLedger queries the ledger edge of a LedgerEntryItem.
+func (c *LedgerEntryItemClient) QueryLedger(_m *LedgerEntryItem) *LedgerEntryQuery {
+	query := (&LedgerEntryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ledgerentryitem.Table, ledgerentryitem.FieldID, id),
+			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ledgerentryitem.LedgerTable, ledgerentryitem.LedgerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LedgerEntryItemClient) Hooks() []Hook {
+	return c.hooks.LedgerEntryItem
+}
+
+// Interceptors returns the client interceptors.
+func (c *LedgerEntryItemClient) Interceptors() []Interceptor {
+	return c.inters.LedgerEntryItem
+}
+
+func (c *LedgerEntryItemClient) mutate(ctx context.Context, m *LedgerEntryItemMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LedgerEntryItemCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LedgerEntryItemUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LedgerEntryItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LedgerEntryItemDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown LedgerEntryItem mutation op: %q", m.Op())
+	}
+}
+
+// MemberClient is a client for the Member schema.
+type MemberClient struct {
+	config
+}
+
+// NewMemberClient returns a client for the Member from the given config.
+func NewMemberClient(c config) *MemberClient {
+	return &MemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `member.Hooks(f(g(h())))`.
+func (c *MemberClient) Use(hooks ...Hook) {
+	c.hooks.Member = append(c.hooks.Member, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `member.Intercept(f(g(h())))`.
+func (c *MemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Member = append(c.inters.Member, interceptors...)
+}
+
+// Create returns a builder for creating a Member entity.
+func (c *MemberClient) Create() *MemberCreate {
+	mutation := newMemberMutation(c.config, OpCreate)
+	return &MemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Member entities.
+func (c *MemberClient) CreateBulk(builders ...*MemberCreate) *MemberCreateBulk {
+	return &MemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MemberClient) MapCreateBulk(slice any, setFunc func(*MemberCreate, int)) *MemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MemberCreateBulk{err: fmt.Errorf("calling to MemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Member.
+func (c *MemberClient) Update() *MemberUpdate {
+	mutation := newMemberMutation(c.config, OpUpdate)
+	return &MemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MemberClient) UpdateOne(_m *Member) *MemberUpdateOne {
+	mutation := newMemberMutation(c.config, OpUpdateOne, withMember(_m))
+	return &MemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MemberClient) UpdateOneID(id int64) *MemberUpdateOne {
+	mutation := newMemberMutation(c.config, OpUpdateOne, withMemberID(id))
+	return &MemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Member.
+func (c *MemberClient) Delete() *MemberDelete {
+	mutation := newMemberMutation(c.config, OpDelete)
+	return &MemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MemberClient) DeleteOne(_m *Member) *MemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MemberClient) DeleteOneID(id int64) *MemberDeleteOne {
+	builder := c.Delete().Where(member.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MemberDeleteOne{builder}
+}
+
+// Query returns a query builder for Member.
+func (c *MemberClient) Query() *MemberQuery {
+	return &MemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Member entity by its id.
+func (c *MemberClient) Get(ctx context.Context, id int64) (*Member, error) {
+	return c.Query().Where(member.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MemberClient) GetX(ctx context.Context, id int64) *Member {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryCards queries the cards edge of a Member.
+func (c *MemberClient) QueryCards(_m *Member) *MemberCardQuery {
+	query := (&MemberCardClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(member.Table, member.FieldID, id),
+			sqlgraph.To(membercard.Table, membercard.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, member.CardsTable, member.CardsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLedgers queries the ledgers edge of a Member.
+func (c *MemberClient) QueryLedgers(_m *Member) *LedgerEntryQuery {
+	query := (&LedgerEntryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(member.Table, member.FieldID, id),
+			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, member.LedgersTable, member.LedgersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MemberClient) Hooks() []Hook {
+	return c.hooks.Member
+}
+
+// Interceptors returns the client interceptors.
+func (c *MemberClient) Interceptors() []Interceptor {
+	return c.inters.Member
+}
+
+func (c *MemberClient) mutate(ctx context.Context, m *MemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Member mutation op: %q", m.Op())
+	}
+}
+
+// MemberCardClient is a client for the MemberCard schema.
+type MemberCardClient struct {
+	config
+}
+
+// NewMemberCardClient returns a client for the MemberCard from the given config.
+func NewMemberCardClient(c config) *MemberCardClient {
+	return &MemberCardClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `membercard.Hooks(f(g(h())))`.
+func (c *MemberCardClient) Use(hooks ...Hook) {
+	c.hooks.MemberCard = append(c.hooks.MemberCard, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `membercard.Intercept(f(g(h())))`.
+func (c *MemberCardClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MemberCard = append(c.inters.MemberCard, interceptors...)
+}
+
+// Create returns a builder for creating a MemberCard entity.
+func (c *MemberCardClient) Create() *MemberCardCreate {
+	mutation := newMemberCardMutation(c.config, OpCreate)
+	return &MemberCardCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of MemberCard entities.
+func (c *MemberCardClient) CreateBulk(builders ...*MemberCardCreate) *MemberCardCreateBulk {
+	return &MemberCardCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MemberCardClient) MapCreateBulk(slice any, setFunc func(*MemberCardCreate, int)) *MemberCardCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MemberCardCreateBulk{err: fmt.Errorf("calling to MemberCardClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MemberCardCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MemberCardCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for MemberCard.
+func (c *MemberCardClient) Update() *MemberCardUpdate {
+	mutation := newMemberCardMutation(c.config, OpUpdate)
+	return &MemberCardUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MemberCardClient) UpdateOne(_m *MemberCard) *MemberCardUpdateOne {
+	mutation := newMemberCardMutation(c.config, OpUpdateOne, withMemberCard(_m))
+	return &MemberCardUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MemberCardClient) UpdateOneID(id int64) *MemberCardUpdateOne {
+	mutation := newMemberCardMutation(c.config, OpUpdateOne, withMemberCardID(id))
+	return &MemberCardUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for MemberCard.
+func (c *MemberCardClient) Delete() *MemberCardDelete {
+	mutation := newMemberCardMutation(c.config, OpDelete)
+	return &MemberCardDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MemberCardClient) DeleteOne(_m *MemberCard) *MemberCardDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MemberCardClient) DeleteOneID(id int64) *MemberCardDeleteOne {
+	builder := c.Delete().Where(membercard.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MemberCardDeleteOne{builder}
+}
+
+// Query returns a query builder for MemberCard.
+func (c *MemberCardClient) Query() *MemberCardQuery {
+	return &MemberCardQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMemberCard},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a MemberCard entity by its id.
+func (c *MemberCardClient) Get(ctx context.Context, id int64) (*MemberCard, error) {
+	return c.Query().Where(membercard.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MemberCardClient) GetX(ctx context.Context, id int64) *MemberCard {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryMember queries the member edge of a MemberCard.
+func (c *MemberCardClient) QueryMember(_m *MemberCard) *MemberQuery {
+	query := (&MemberClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(membercard.Table, membercard.FieldID, id),
+			sqlgraph.To(member.Table, member.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, membercard.MemberTable, membercard.MemberColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryItemBalances queries the item_balances edge of a MemberCard.
+func (c *MemberCardClient) QueryItemBalances(_m *MemberCard) *CardItemBalanceQuery {
+	query := (&CardItemBalanceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(membercard.Table, membercard.FieldID, id),
+			sqlgraph.To(carditembalance.Table, carditembalance.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, membercard.ItemBalancesTable, membercard.ItemBalancesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLedgers queries the ledgers edge of a MemberCard.
+func (c *MemberCardClient) QueryLedgers(_m *MemberCard) *LedgerEntryQuery {
+	query := (&LedgerEntryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(membercard.Table, membercard.FieldID, id),
+			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, membercard.LedgersTable, membercard.LedgersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MemberCardClient) Hooks() []Hook {
+	return c.hooks.MemberCard
+}
+
+// Interceptors returns the client interceptors.
+func (c *MemberCardClient) Interceptors() []Interceptor {
+	return c.inters.MemberCard
+}
+
+func (c *MemberCardClient) mutate(ctx context.Context, m *MemberCardMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MemberCardCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MemberCardUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MemberCardUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MemberCardDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown MemberCard mutation op: %q", m.Op())
 	}
 }
 
@@ -1189,11 +2371,13 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		BizType, OAuthIdentity, RefreshToken, SmsCode, Store, StoreMember,
-		User []ent.Hook
+		BizType, CardItemBalance, CardProduct, CardProductItem, LedgerEntry,
+		LedgerEntryItem, Member, MemberCard, OAuthIdentity, RefreshToken, SmsCode,
+		Store, StoreMember, User []ent.Hook
 	}
 	inters struct {
-		BizType, OAuthIdentity, RefreshToken, SmsCode, Store, StoreMember,
-		User []ent.Interceptor
+		BizType, CardItemBalance, CardProduct, CardProductItem, LedgerEntry,
+		LedgerEntryItem, Member, MemberCard, OAuthIdentity, RefreshToken, SmsCode,
+		Store, StoreMember, User []ent.Interceptor
 	}
 )

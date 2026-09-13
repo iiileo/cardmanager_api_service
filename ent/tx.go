@@ -14,6 +14,20 @@ type Tx struct {
 	config
 	// BizType is the client for interacting with the BizType builders.
 	BizType *BizTypeClient
+	// CardItemBalance is the client for interacting with the CardItemBalance builders.
+	CardItemBalance *CardItemBalanceClient
+	// CardProduct is the client for interacting with the CardProduct builders.
+	CardProduct *CardProductClient
+	// CardProductItem is the client for interacting with the CardProductItem builders.
+	CardProductItem *CardProductItemClient
+	// LedgerEntry is the client for interacting with the LedgerEntry builders.
+	LedgerEntry *LedgerEntryClient
+	// LedgerEntryItem is the client for interacting with the LedgerEntryItem builders.
+	LedgerEntryItem *LedgerEntryItemClient
+	// Member is the client for interacting with the Member builders.
+	Member *MemberClient
+	// MemberCard is the client for interacting with the MemberCard builders.
+	MemberCard *MemberCardClient
 	// OAuthIdentity is the client for interacting with the OAuthIdentity builders.
 	OAuthIdentity *OAuthIdentityClient
 	// RefreshToken is the client for interacting with the RefreshToken builders.
@@ -158,6 +172,13 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.BizType = NewBizTypeClient(tx.config)
+	tx.CardItemBalance = NewCardItemBalanceClient(tx.config)
+	tx.CardProduct = NewCardProductClient(tx.config)
+	tx.CardProductItem = NewCardProductItemClient(tx.config)
+	tx.LedgerEntry = NewLedgerEntryClient(tx.config)
+	tx.LedgerEntryItem = NewLedgerEntryItemClient(tx.config)
+	tx.Member = NewMemberClient(tx.config)
+	tx.MemberCard = NewMemberCardClient(tx.config)
 	tx.OAuthIdentity = NewOAuthIdentityClient(tx.config)
 	tx.RefreshToken = NewRefreshTokenClient(tx.config)
 	tx.SmsCode = NewSmsCodeClient(tx.config)

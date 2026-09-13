@@ -37,6 +37,274 @@ var (
 			},
 		},
 	}
+	// CardItemBalancesColumns holds the columns for the "card_item_balances" table.
+	CardItemBalancesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "product_item_id", Type: field.TypeInt64},
+		{Name: "name_snapshot", Type: field.TypeString, Size: 32},
+		{Name: "remain_times", Type: field.TypeInt},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "card_id", Type: field.TypeInt64},
+	}
+	// CardItemBalancesTable holds the schema information for the "card_item_balances" table.
+	CardItemBalancesTable = &schema.Table{
+		Name:       "card_item_balances",
+		Columns:    CardItemBalancesColumns,
+		PrimaryKey: []*schema.Column{CardItemBalancesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "card_item_balances_member_cards_item_balances",
+				Columns:    []*schema.Column{CardItemBalancesColumns[6]},
+				RefColumns: []*schema.Column{MemberCardsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "carditembalance_card_id_product_item_id",
+				Unique:  true,
+				Columns: []*schema.Column{CardItemBalancesColumns[6], CardItemBalancesColumns[1]},
+			},
+			{
+				Name:    "carditembalance_card_id",
+				Unique:  false,
+				Columns: []*schema.Column{CardItemBalancesColumns[6]},
+			},
+		},
+	}
+	// CardProductsColumns holds the columns for the "card_products" table.
+	CardProductsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "store_id", Type: field.TypeInt64},
+		{Name: "type", Type: field.TypeString, Size: 16},
+		{Name: "name", Type: field.TypeString, Size: 64},
+		{Name: "price", Type: field.TypeInt, Default: 0},
+		{Name: "times", Type: field.TypeInt, Nullable: true},
+		{Name: "valid_months", Type: field.TypeInt, Nullable: true},
+		{Name: "status", Type: field.TypeInt8, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// CardProductsTable holds the schema information for the "card_products" table.
+	CardProductsTable = &schema.Table{
+		Name:       "card_products",
+		Columns:    CardProductsColumns,
+		PrimaryKey: []*schema.Column{CardProductsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "cardproduct_store_id_type_status",
+				Unique:  false,
+				Columns: []*schema.Column{CardProductsColumns[1], CardProductsColumns[2], CardProductsColumns[7]},
+			},
+			{
+				Name:    "cardproduct_store_id",
+				Unique:  false,
+				Columns: []*schema.Column{CardProductsColumns[1]},
+			},
+		},
+	}
+	// CardProductItemsColumns holds the columns for the "card_product_items" table.
+	CardProductItemsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 32},
+		{Name: "times", Type: field.TypeInt},
+		{Name: "sort", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "product_id", Type: field.TypeInt64},
+	}
+	// CardProductItemsTable holds the schema information for the "card_product_items" table.
+	CardProductItemsTable = &schema.Table{
+		Name:       "card_product_items",
+		Columns:    CardProductItemsColumns,
+		PrimaryKey: []*schema.Column{CardProductItemsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "card_product_items_card_products_items",
+				Columns:    []*schema.Column{CardProductItemsColumns[6]},
+				RefColumns: []*schema.Column{CardProductsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "cardproductitem_product_id",
+				Unique:  false,
+				Columns: []*schema.Column{CardProductItemsColumns[6]},
+			},
+		},
+	}
+	// LedgerEntriesColumns holds the columns for the "ledger_entries" table.
+	LedgerEntriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "store_id", Type: field.TypeInt64},
+		{Name: "type", Type: field.TypeString, Size: 32},
+		{Name: "amount", Type: field.TypeInt, Nullable: true},
+		{Name: "times", Type: field.TypeInt, Nullable: true},
+		{Name: "item_name", Type: field.TypeString, Nullable: true, Size: 64},
+		{Name: "balance_after", Type: field.TypeInt, Nullable: true},
+		{Name: "times_after", Type: field.TypeInt, Nullable: true},
+		{Name: "remark", Type: field.TypeString, Nullable: true, Size: 128},
+		{Name: "operator_id", Type: field.TypeInt64},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "member_id", Type: field.TypeInt64},
+		{Name: "card_id", Type: field.TypeInt64},
+	}
+	// LedgerEntriesTable holds the schema information for the "ledger_entries" table.
+	LedgerEntriesTable = &schema.Table{
+		Name:       "ledger_entries",
+		Columns:    LedgerEntriesColumns,
+		PrimaryKey: []*schema.Column{LedgerEntriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "ledger_entries_members_ledgers",
+				Columns:    []*schema.Column{LedgerEntriesColumns[11]},
+				RefColumns: []*schema.Column{MembersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "ledger_entries_member_cards_ledgers",
+				Columns:    []*schema.Column{LedgerEntriesColumns[12]},
+				RefColumns: []*schema.Column{MemberCardsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ledgerentry_store_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[10]},
+			},
+			{
+				Name:    "ledgerentry_member_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{LedgerEntriesColumns[11], LedgerEntriesColumns[10]},
+			},
+			{
+				Name:    "ledgerentry_operator_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{LedgerEntriesColumns[9], LedgerEntriesColumns[10]},
+			},
+			{
+				Name:    "ledgerentry_card_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{LedgerEntriesColumns[12], LedgerEntriesColumns[10]},
+			},
+			{
+				Name:    "ledgerentry_store_id_type",
+				Unique:  false,
+				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[2]},
+			},
+		},
+	}
+	// LedgerEntryItemsColumns holds the columns for the "ledger_entry_items" table.
+	LedgerEntryItemsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "item_balance_id", Type: field.TypeInt64},
+		{Name: "product_item_id", Type: field.TypeInt64},
+		{Name: "name_snapshot", Type: field.TypeString, Size: 32},
+		{Name: "times", Type: field.TypeInt},
+		{Name: "times_after", Type: field.TypeInt},
+		{Name: "ledger_id", Type: field.TypeInt64},
+	}
+	// LedgerEntryItemsTable holds the schema information for the "ledger_entry_items" table.
+	LedgerEntryItemsTable = &schema.Table{
+		Name:       "ledger_entry_items",
+		Columns:    LedgerEntryItemsColumns,
+		PrimaryKey: []*schema.Column{LedgerEntryItemsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "ledger_entry_items_ledger_entries_items",
+				Columns:    []*schema.Column{LedgerEntryItemsColumns[6]},
+				RefColumns: []*schema.Column{LedgerEntriesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ledgerentryitem_ledger_id",
+				Unique:  false,
+				Columns: []*schema.Column{LedgerEntryItemsColumns[6]},
+			},
+		},
+	}
+	// MembersColumns holds the columns for the "members" table.
+	MembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "store_id", Type: field.TypeInt64},
+		{Name: "name", Type: field.TypeString, Size: 32},
+		{Name: "phone", Type: field.TypeString, Size: 20},
+		{Name: "source", Type: field.TypeString, Nullable: true, Size: 32},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// MembersTable holds the schema information for the "members" table.
+	MembersTable = &schema.Table{
+		Name:       "members",
+		Columns:    MembersColumns,
+		PrimaryKey: []*schema.Column{MembersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "member_store_id_phone",
+				Unique:  true,
+				Columns: []*schema.Column{MembersColumns[1], MembersColumns[3]},
+			},
+			{
+				Name:    "member_store_id_name",
+				Unique:  false,
+				Columns: []*schema.Column{MembersColumns[1], MembersColumns[2]},
+			},
+		},
+	}
+	// MemberCardsColumns holds the columns for the "member_cards" table.
+	MemberCardsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "store_id", Type: field.TypeInt64},
+		{Name: "product_id", Type: field.TypeInt64},
+		{Name: "type", Type: field.TypeString, Size: 16},
+		{Name: "name_snapshot", Type: field.TypeString, Size: 64},
+		{Name: "balance", Type: field.TypeInt, Default: 0},
+		{Name: "remain_times", Type: field.TypeInt, Nullable: true},
+		{Name: "valid_from", Type: field.TypeTime, Nullable: true},
+		{Name: "valid_to", Type: field.TypeTime, Nullable: true},
+		{Name: "status", Type: field.TypeString, Size: 16, Default: "active"},
+		{Name: "opened_by", Type: field.TypeInt64},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "member_id", Type: field.TypeInt64},
+	}
+	// MemberCardsTable holds the schema information for the "member_cards" table.
+	MemberCardsTable = &schema.Table{
+		Name:       "member_cards",
+		Columns:    MemberCardsColumns,
+		PrimaryKey: []*schema.Column{MemberCardsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "member_cards_members_cards",
+				Columns:    []*schema.Column{MemberCardsColumns[13]},
+				RefColumns: []*schema.Column{MembersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "membercard_member_id",
+				Unique:  false,
+				Columns: []*schema.Column{MemberCardsColumns[13]},
+			},
+			{
+				Name:    "membercard_store_id_type",
+				Unique:  false,
+				Columns: []*schema.Column{MemberCardsColumns[1], MemberCardsColumns[3]},
+			},
+			{
+				Name:    "membercard_store_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{MemberCardsColumns[1], MemberCardsColumns[9]},
+			},
+		},
+	}
 	// OauthIdentitiesColumns holds the columns for the "oauth_identities" table.
 	OauthIdentitiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -231,6 +499,13 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		BizTypesTable,
+		CardItemBalancesTable,
+		CardProductsTable,
+		CardProductItemsTable,
+		LedgerEntriesTable,
+		LedgerEntryItemsTable,
+		MembersTable,
+		MemberCardsTable,
 		OauthIdentitiesTable,
 		RefreshTokensTable,
 		SmsCodesTable,
@@ -243,6 +518,33 @@ var (
 func init() {
 	BizTypesTable.Annotation = &entsql.Annotation{
 		Table: "biz_types",
+	}
+	CardItemBalancesTable.ForeignKeys[0].RefTable = MemberCardsTable
+	CardItemBalancesTable.Annotation = &entsql.Annotation{
+		Table: "card_item_balances",
+	}
+	CardProductsTable.Annotation = &entsql.Annotation{
+		Table: "card_products",
+	}
+	CardProductItemsTable.ForeignKeys[0].RefTable = CardProductsTable
+	CardProductItemsTable.Annotation = &entsql.Annotation{
+		Table: "card_product_items",
+	}
+	LedgerEntriesTable.ForeignKeys[0].RefTable = MembersTable
+	LedgerEntriesTable.ForeignKeys[1].RefTable = MemberCardsTable
+	LedgerEntriesTable.Annotation = &entsql.Annotation{
+		Table: "ledger_entries",
+	}
+	LedgerEntryItemsTable.ForeignKeys[0].RefTable = LedgerEntriesTable
+	LedgerEntryItemsTable.Annotation = &entsql.Annotation{
+		Table: "ledger_entry_items",
+	}
+	MembersTable.Annotation = &entsql.Annotation{
+		Table: "members",
+	}
+	MemberCardsTable.ForeignKeys[0].RefTable = MembersTable
+	MemberCardsTable.Annotation = &entsql.Annotation{
+		Table: "member_cards",
 	}
 	OauthIdentitiesTable.Annotation = &entsql.Annotation{
 		Table: "oauth_identities",

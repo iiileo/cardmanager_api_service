@@ -26,6 +26,10 @@ func NewRouter(
 	authHandler *v1.AuthHandler,
 	storeHandler *v1.StoreHandler,
 	bizTypeHandler *v1.BizTypeHandler,
+	cardProductHandler *v1.CardProductHandler,
+	memberHandler *v1.MemberHandler,
+	cardHandler *v1.CardHandler,
+	ledgerHandler *v1.LedgerHandler,
 	storeSvc service.StoreService,
 ) *Router {
 	if cfg.Server.Mode == "local" {
@@ -38,10 +42,12 @@ func NewRouter(
 	engine.Use(gin.Recovery())
 	engine.Use(middleware.ErrorHandler(log))
 
+	// System
 	engine.GET("/healthz", health.Health)
 
 	apiV1 := engine.Group("/api/v1")
 	{
+		// Auth（部分公开）
 		authGroup := apiV1.Group("/auth")
 		{
 			authGroup.POST("/sms/send", authHandler.SendSMS)
@@ -49,19 +55,21 @@ func NewRouter(
 			authGroup.POST("/token/refresh", authHandler.Refresh)
 			authGroup.POST("/logout", authHandler.Logout)
 
-			secured := authGroup.Group("")
-			secured.Use(middleware.RequireAuth(tm))
+			me := authGroup.Group("")
+			me.Use(middleware.RequireAuth(tm))
 			{
-				secured.GET("/me", authHandler.Me)
-				secured.PATCH("/me", authHandler.UpdateMe)
+				me.GET("/me", authHandler.Me)
+				me.PATCH("/me", authHandler.UpdateMe)
 			}
 		}
 
 		authed := apiV1.Group("")
 		authed.Use(middleware.RequireAuth(tm))
 		{
+			// BizTypes
 			authed.GET("/biz-types", bizTypeHandler.List)
 
+			// Stores
 			stores := authed.Group("/stores")
 			{
 				stores.GET("", storeHandler.List)
@@ -74,13 +82,50 @@ func NewRouter(
 				stores.POST("/:id/invite-code/refresh", storeHandler.RefreshInviteCode)
 			}
 
-			staff := authed.Group("/staff")
-			staff.Use(middleware.RequireStore(storeSvc))
+			// 以下均需 X-Store-Id
+			storeScoped := authed.Group("")
+			storeScoped.Use(middleware.RequireStore(storeSvc))
 			{
-				staff.GET("", storeHandler.ListStaff)
-				staff.GET("/applications", storeHandler.ListApplications)
-				staff.POST("/applications/:id/approve", middleware.RequireStoreOwner(), storeHandler.Approve)
-				staff.POST("/applications/:id/reject", middleware.RequireStoreOwner(), storeHandler.Reject)
+				// Staff
+				staff := storeScoped.Group("/staff")
+				{
+					staff.GET("", storeHandler.ListStaff)
+					staff.GET("/applications", storeHandler.ListApplications)
+					staff.POST("/applications/:id/approve", middleware.RequireStoreOwner(), storeHandler.Approve)
+					staff.POST("/applications/:id/reject", middleware.RequireStoreOwner(), storeHandler.Reject)
+				}
+
+				// CardProducts 卡种
+				products := storeScoped.Group("/card-products")
+				{
+					products.GET("", cardProductHandler.List)
+					products.POST("", middleware.RequireStoreOwner(), cardProductHandler.Create)
+					products.DELETE("/:id", middleware.RequireStoreOwner(), cardProductHandler.Delete)
+				}
+
+				// Members 会员
+				members := storeScoped.Group("/members")
+				{
+					members.GET("", memberHandler.List)
+					members.POST("/cards", memberHandler.OpenCard)
+					members.GET("/:id", memberHandler.Get)
+					members.GET("/:id/cards", cardHandler.ListByMember)
+				}
+
+				// Cards 持卡 / 充值 / 扣除
+				cards := storeScoped.Group("/cards")
+				{
+					cards.GET("/:id", cardHandler.Get)
+					cards.POST("/:id/recharge", cardHandler.Recharge)
+					cards.POST("/:id/consume", cardHandler.Consume)
+				}
+
+				// Ledger 流水
+				ledger := storeScoped.Group("/ledger")
+				{
+					ledger.GET("", ledgerHandler.List)
+					ledger.GET("/:id", ledgerHandler.Get)
+				}
 			}
 		}
 	}

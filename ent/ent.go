@@ -4,6 +4,13 @@ package ent
 
 import (
 	"card_manager/api_service/ent/biztype"
+	"card_manager/api_service/ent/carditembalance"
+	"card_manager/api_service/ent/cardproduct"
+	"card_manager/api_service/ent/cardproductitem"
+	"card_manager/api_service/ent/ledgerentry"
+	"card_manager/api_service/ent/ledgerentryitem"
+	"card_manager/api_service/ent/member"
+	"card_manager/api_service/ent/membercard"
 	"card_manager/api_service/ent/oauthidentity"
 	"card_manager/api_service/ent/refreshtoken"
 	"card_manager/api_service/ent/smscode"
@@ -79,13 +86,20 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			biztype.Table:       biztype.ValidColumn,
-			oauthidentity.Table: oauthidentity.ValidColumn,
-			refreshtoken.Table:  refreshtoken.ValidColumn,
-			smscode.Table:       smscode.ValidColumn,
-			store.Table:         store.ValidColumn,
-			storemember.Table:   storemember.ValidColumn,
-			user.Table:          user.ValidColumn,
+			biztype.Table:         biztype.ValidColumn,
+			carditembalance.Table: carditembalance.ValidColumn,
+			cardproduct.Table:     cardproduct.ValidColumn,
+			cardproductitem.Table: cardproductitem.ValidColumn,
+			ledgerentry.Table:     ledgerentry.ValidColumn,
+			ledgerentryitem.Table: ledgerentryitem.ValidColumn,
+			member.Table:          member.ValidColumn,
+			membercard.Table:      membercard.ValidColumn,
+			oauthidentity.Table:   oauthidentity.ValidColumn,
+			refreshtoken.Table:    refreshtoken.ValidColumn,
+			smscode.Table:         smscode.ValidColumn,
+			store.Table:           store.ValidColumn,
+			storemember.Table:     storemember.ValidColumn,
+			user.Table:            user.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

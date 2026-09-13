@@ -1,25 +1,46 @@
 # Postman
 
 工作区：**卡管家**  
-Collection：**卡管理 API**  
+Collection：**卡管理 API（分组）**（推荐）/ 或导入本地 `card-manager-api.postman_collection.json`  
 Environment：**Local**（`baseUrl=http://localhost:8080`）
+
+## 分组结构
+
+| 分组 | 说明 |
+|------|------|
+| System | 健康检查 |
+| Auth | 登录 / Token / 当前用户 |
+| BizTypes | 业态列表 |
+| Stores | 门店 |
+| Staff | 员工（需 `X-Store-Id`） |
+| CardProducts | 卡种 |
+| Members | 会员 / 开卡 |
+| Cards | 卡详情 / 充值 / 扣除 |
+| Ledger | 流水 |
 
 ## 联调步骤
 
-1. 打开 Postman，选环境 **Local**
+1. 打开 Postman，选环境 **Local**，用 **卡管理 API（分组）**
 2. `Auth / 发送短信验证码` → `Auth / 验证码登录`（自动写入 `access_token`）
-3. `业态列表`（`GET /api/v1/biz-types`）拉取可选行业，创建门店时填返回的 `code`
-4. 其他接口走 Collection Bearer `{{access_token}}`，无需手填
-5. `Stores / 创建门店` 会写入 `store_id`；Staff 接口自动带 `X-Store-Id`
-
-## 脚本说明
-
-| 请求 | Tests 脚本 |
-|------|-----------|
-| 验证码登录 | 写入 `access_token` / `refresh_token` / `user_id` |
-| 刷新 Token | 更新双 token |
-| 创建门店 | 写入 `store_id` / `invite_code` |
+3. `BizTypes / 业态列表` 拉行业 code
+4. `Stores / 创建门店` → `store_id`
+5. `CardProducts / 新建卡种` → `product_id` → `Members / 开卡` → `Cards / 扣除`
 
 ## 本地文件
 
-如需离线导入，可从 Postman 导出 Collection / Environment 到本目录。
+- `postman/card-manager-api.postman_collection.json`：完整分组 Collection，可直接 Import
+- 如需离线导入 Environment，从 Postman 导出 **Local** 到本目录
+
+## 扣除（套餐多项）
+
+`Cards / 扣除（支持套餐多项）`：
+
+```json
+{
+  "items": [
+    { "item_id": "{{pack_item_id_1}}", "times": 1 },
+    { "item_id": "{{pack_item_id_2}}", "times": 1 }
+  ],
+  "remark": "一次扣多项"
+}
+```
