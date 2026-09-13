@@ -6,7 +6,9 @@ import (
 
 	"card_manager/api_service/ent"
 	entmember "card_manager/api_service/ent/member"
+	"card_manager/api_service/ent/predicate"
 	domainmember "card_manager/api_service/internal/domain/member"
+	"card_manager/api_service/internal/pkg/pinyinutil"
 	"card_manager/api_service/internal/postgres"
 )
 
@@ -43,9 +45,12 @@ func (r *memberRepository) GetByStorePhone(ctx context.Context, storeID int64, p
 }
 
 func (r *memberRepository) Create(ctx context.Context, in domainmember.CreateInput) (*domainmember.Member, error) {
+	full, initials := pinyinutil.NameKeys(in.Name)
 	b := r.client.Ent().Member.Create().
 		SetStoreID(in.StoreID).
 		SetName(in.Name).
+		SetNamePinyin(full).
+		SetNameInitials(initials).
 		SetPhone(in.Phone)
 	if in.Source != nil {
 		b.SetSource(*in.Source)
@@ -59,12 +64,20 @@ func (r *memberRepository) Create(ctx context.Context, in domainmember.CreateInp
 
 func (r *memberRepository) ListByStore(ctx context.Context, storeID int64, q string, limit, offset int) ([]*domainmember.Member, int, error) {
 	query := r.client.Ent().Member.Query().Where(entmember.StoreIDEQ(storeID))
-	q = strings.TrimSpace(q)
-	if q != "" {
-		query = query.Where(entmember.Or(
-			entmember.NameContainsFold(q),
-			entmember.PhoneContains(q),
-		))
+	raw := strings.TrimSpace(q)
+	if raw != "" {
+		key := pinyinutil.NormalizeQuery(raw)
+		preds := []predicate.Member{
+			entmember.NameContainsFold(raw),
+			entmember.PhoneContains(raw),
+		}
+		if key != "" {
+			preds = append(preds,
+				entmember.NamePinyinContainsFold(key),
+				entmember.NameInitialsContainsFold(key),
+			)
+		}
+		query = query.Where(entmember.Or(preds...))
 	}
 	total, err := query.Clone().Count(ctx)
 	if err != nil {
@@ -86,4 +99,32 @@ func (r *memberRepository) ListByStore(ctx context.Context, storeID int64, q str
 		out = append(out, domainmember.FromEnt(m))
 	}
 	return out, total, nil
+}
+
+// BackfillNamePinyin 为缺失拼音字段的会员补写全拼/首拼。
+func (r *memberRepository) BackfillNamePinyin(ctx context.Context) (int, error) {
+	list, err := r.client.Ent().Member.Query().
+		Where(entmember.Or(
+			entmember.NamePinyinEQ(""),
+			entmember.NameInitialsEQ(""),
+		)).
+		All(ctx)
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	for _, m := range list {
+		full, initials := pinyinutil.NameKeys(m.Name)
+		if full == m.NamePinyin && initials == m.NameInitials {
+			continue
+		}
+		if _, err := r.client.Ent().Member.UpdateOneID(m.ID).
+			SetNamePinyin(full).
+			SetNameInitials(initials).
+			Save(ctx); err != nil {
+			return n, err
+		}
+		n++
+	}
+	return n, nil
 }

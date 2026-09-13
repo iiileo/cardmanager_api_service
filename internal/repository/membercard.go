@@ -35,6 +35,21 @@ func (r *memberCardRepository) GetByID(ctx context.Context, id int64) (*domainca
 	return domaincard.FromEnt(c, nil), nil
 }
 
+func (r *memberCardRepository) GetByMemberAndType(ctx context.Context, storeID, memberID int64, typ string) (*domaincard.Card, error) {
+	c, err := r.withItems(r.client.Ent().MemberCard.Query().Where(
+		entcard.StoreIDEQ(storeID),
+		entcard.MemberIDEQ(memberID),
+		entcard.TypeEQ(typ),
+	)).Order(ent.Desc(entcard.FieldID)).First(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return domaincard.FromEnt(c, nil), nil
+}
+
 func (r *memberCardRepository) ListByMember(ctx context.Context, storeID, memberID int64) ([]*domaincard.Card, error) {
 	list, err := r.withItems(r.client.Ent().MemberCard.Query().Where(
 		entcard.StoreIDEQ(storeID),

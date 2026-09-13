@@ -8,12 +8,25 @@ import (
 )
 
 const (
-	TypeOpen          = "open"
-	TypeRecharge      = "recharge"
-	TypeConsumeValue  = "consume_value"
-	TypeConsumeCount  = "consume_count"
-	TypeConsumePack   = "consume_pack"
+	TypeOpen         = "open"
+	TypeRecharge     = "recharge"
+	TypeConsumeValue = "consume_value"
+	TypeConsumeCount = "consume_count"
+	TypeConsumePack  = "consume_pack"
 )
+
+func ConsumeTypes() []string {
+	return []string{TypeConsumeValue, TypeConsumeCount, TypeConsumePack}
+}
+
+func IsConsumeType(typ string) bool {
+	switch typ {
+	case TypeConsumeValue, TypeConsumeCount, TypeConsumePack:
+		return true
+	default:
+		return false
+	}
+}
 
 type EntryItem struct {
 	ID            int64
@@ -31,6 +44,7 @@ type Entry struct {
 	MemberID     int64
 	CardID       int64
 	Type         string
+	CardType     string
 	Amount       *int
 	Times        *int
 	ItemName     *string
@@ -67,6 +81,7 @@ func FromEnt(e *ent.LedgerEntry, items []*ent.LedgerEntryItem) *Entry {
 		MemberID:     e.MemberID,
 		CardID:       e.CardID,
 		Type:         e.Type,
+		CardType:     e.CardType,
 		Amount:       e.Amount,
 		Times:        e.Times,
 		ItemName:     e.ItemName,
@@ -102,6 +117,7 @@ type CreateInput struct {
 	MemberID     int64
 	CardID       int64
 	Type         string
+	CardType     string
 	Amount       *int
 	Times        *int
 	ItemName     *string
@@ -113,16 +129,54 @@ type CreateInput struct {
 }
 
 type ListFilter struct {
-	StoreID int64
-	Type    string
-	From    *time.Time
-	To      *time.Time
-	Limit   int
-	Offset  int
+	StoreID  int64
+	Types    []string
+	Type     string // 兼容单类型；与 Types 二选一，Types 优先
+	CardType string
+	MemberID *int64
+	CardID   *int64
+	From     *time.Time
+	To       *time.Time
+	Limit    int
+	Offset   int
+}
+
+type TypeBucket struct {
+	Type     string
+	CardType string
+	Count    int
+	Amount   int // 金额合计（充值为正；储值消费为正的绝对值）
+	Times    int // 次数合计（正数）
+}
+
+type PackItemBucket struct {
+	ProductItemID int64
+	Name          string
+	Times         int
+	Count         int
+}
+
+type Summary struct {
+	TotalCount  int
+	TotalAmount int
+	TotalTimes  int
+	ByType      []TypeBucket
+	ByPackItem  []PackItemBucket
+}
+
+type SummaryFilter struct {
+	StoreID  int64
+	Types    []string
+	CardType string
+	MemberID *int64
+	CardID   *int64
+	From     *time.Time
+	To       *time.Time
 }
 
 type Repository interface {
 	Create(ctx context.Context, in CreateInput) (*Entry, error)
 	GetByID(ctx context.Context, id int64) (*Entry, error)
 	List(ctx context.Context, f ListFilter) ([]*Entry, int, error)
+	Summarize(ctx context.Context, f SummaryFilter) (*Summary, error)
 }

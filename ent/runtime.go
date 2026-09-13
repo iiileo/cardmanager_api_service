@@ -221,16 +221,22 @@ func init() {
 			return nil
 		}
 	}()
+	// ledgerentryDescCardType is the schema descriptor for card_type field.
+	ledgerentryDescCardType := ledgerentryFields[5].Descriptor()
+	// ledgerentry.DefaultCardType holds the default value on creation for the card_type field.
+	ledgerentry.DefaultCardType = ledgerentryDescCardType.Default.(string)
+	// ledgerentry.CardTypeValidator is a validator for the "card_type" field. It is called by the builders before save.
+	ledgerentry.CardTypeValidator = ledgerentryDescCardType.Validators[0].(func(string) error)
 	// ledgerentryDescItemName is the schema descriptor for item_name field.
-	ledgerentryDescItemName := ledgerentryFields[7].Descriptor()
+	ledgerentryDescItemName := ledgerentryFields[8].Descriptor()
 	// ledgerentry.ItemNameValidator is a validator for the "item_name" field. It is called by the builders before save.
 	ledgerentry.ItemNameValidator = ledgerentryDescItemName.Validators[0].(func(string) error)
 	// ledgerentryDescRemark is the schema descriptor for remark field.
-	ledgerentryDescRemark := ledgerentryFields[10].Descriptor()
+	ledgerentryDescRemark := ledgerentryFields[11].Descriptor()
 	// ledgerentry.RemarkValidator is a validator for the "remark" field. It is called by the builders before save.
 	ledgerentry.RemarkValidator = ledgerentryDescRemark.Validators[0].(func(string) error)
 	// ledgerentryDescCreatedAt is the schema descriptor for created_at field.
-	ledgerentryDescCreatedAt := ledgerentryFields[12].Descriptor()
+	ledgerentryDescCreatedAt := ledgerentryFields[13].Descriptor()
 	// ledgerentry.DefaultCreatedAt holds the default value on creation for the created_at field.
 	ledgerentry.DefaultCreatedAt = ledgerentryDescCreatedAt.Default.(func() time.Time)
 	ledgerentryitemFields := schema.LedgerEntryItem{}.Fields()
@@ -273,8 +279,20 @@ func init() {
 			return nil
 		}
 	}()
+	// memberDescNamePinyin is the schema descriptor for name_pinyin field.
+	memberDescNamePinyin := memberFields[3].Descriptor()
+	// member.DefaultNamePinyin holds the default value on creation for the name_pinyin field.
+	member.DefaultNamePinyin = memberDescNamePinyin.Default.(string)
+	// member.NamePinyinValidator is a validator for the "name_pinyin" field. It is called by the builders before save.
+	member.NamePinyinValidator = memberDescNamePinyin.Validators[0].(func(string) error)
+	// memberDescNameInitials is the schema descriptor for name_initials field.
+	memberDescNameInitials := memberFields[4].Descriptor()
+	// member.DefaultNameInitials holds the default value on creation for the name_initials field.
+	member.DefaultNameInitials = memberDescNameInitials.Default.(string)
+	// member.NameInitialsValidator is a validator for the "name_initials" field. It is called by the builders before save.
+	member.NameInitialsValidator = memberDescNameInitials.Validators[0].(func(string) error)
 	// memberDescPhone is the schema descriptor for phone field.
-	memberDescPhone := memberFields[3].Descriptor()
+	memberDescPhone := memberFields[5].Descriptor()
 	// member.PhoneValidator is a validator for the "phone" field. It is called by the builders before save.
 	member.PhoneValidator = func() func(string) error {
 		validators := memberDescPhone.Validators
@@ -292,15 +310,15 @@ func init() {
 		}
 	}()
 	// memberDescSource is the schema descriptor for source field.
-	memberDescSource := memberFields[4].Descriptor()
+	memberDescSource := memberFields[6].Descriptor()
 	// member.SourceValidator is a validator for the "source" field. It is called by the builders before save.
 	member.SourceValidator = memberDescSource.Validators[0].(func(string) error)
 	// memberDescCreatedAt is the schema descriptor for created_at field.
-	memberDescCreatedAt := memberFields[5].Descriptor()
+	memberDescCreatedAt := memberFields[7].Descriptor()
 	// member.DefaultCreatedAt holds the default value on creation for the created_at field.
 	member.DefaultCreatedAt = memberDescCreatedAt.Default.(func() time.Time)
 	// memberDescUpdatedAt is the schema descriptor for updated_at field.
-	memberDescUpdatedAt := memberFields[6].Descriptor()
+	memberDescUpdatedAt := memberFields[8].Descriptor()
 	// member.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	member.DefaultUpdatedAt = memberDescUpdatedAt.Default.(func() time.Time)
 	// member.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

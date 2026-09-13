@@ -29,6 +29,8 @@ func (LedgerEntry) Fields() []ent.Field {
 		field.Int64("member_id"),
 		field.Int64("card_id"),
 		field.String("type").MaxLen(32).NotEmpty(), // open / recharge / consume_*
+		// card_type 快照：value / count / pack，便于列表筛选与统计（不随卡变更）
+		field.String("card_type").MaxLen(16).Default(""),
 		field.Int("amount").Optional().Nillable(),
 		field.Int("times").Optional().Nillable(),
 		field.String("item_name").MaxLen(64).Optional().Nillable(),
@@ -63,5 +65,7 @@ func (LedgerEntry) Indexes() []ent.Index {
 		index.Fields("operator_id", "created_at"),
 		index.Fields("card_id", "created_at"),
 		index.Fields("store_id", "type"),
+		index.Fields("store_id", "card_type", "created_at"),
+		index.Fields("store_id", "type", "created_at"),
 	}
 }

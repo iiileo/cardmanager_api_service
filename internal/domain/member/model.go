@@ -44,4 +44,5 @@ type Repository interface {
 	GetByStorePhone(ctx context.Context, storeID int64, phone string) (*Member, error)
 	Create(ctx context.Context, in CreateInput) (*Member, error)
 	ListByStore(ctx context.Context, storeID int64, q string, limit, offset int) ([]*Member, int, error)
+	BackfillNamePinyin(ctx context.Context) (int, error)
 }

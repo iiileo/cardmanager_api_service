@@ -65,6 +65,16 @@ func Name(v string) predicate.Member {
 	return predicate.Member(sql.FieldEQ(FieldName, v))
 }
 
+// NamePinyin applies equality check predicate on the "name_pinyin" field. It's identical to NamePinyinEQ.
+func NamePinyin(v string) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldNamePinyin, v))
+}
+
+// NameInitials applies equality check predicate on the "name_initials" field. It's identical to NameInitialsEQ.
+func NameInitials(v string) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldNameInitials, v))
+}
+
 // Phone applies equality check predicate on the "phone" field. It's identical to PhoneEQ.
 func Phone(v string) predicate.Member {
 	return predicate.Member(sql.FieldEQ(FieldPhone, v))
@@ -188,6 +198,136 @@ func NameEqualFold(v string) predicate.Member {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.Member {
 	return predicate.Member(sql.FieldContainsFold(FieldName, v))
+}
+
+// NamePinyinEQ applies the EQ predicate on the "name_pinyin" field.
+func NamePinyinEQ(v string) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldNamePinyin, v))
+}
+
+// NamePinyinNEQ applies the NEQ predicate on the "name_pinyin" field.
+func NamePinyinNEQ(v string) predicate.Member {
+	return predicate.Member(sql.FieldNEQ(FieldNamePinyin, v))
+}
+
+// NamePinyinIn applies the In predicate on the "name_pinyin" field.
+func NamePinyinIn(vs ...string) predicate.Member {
+	return predicate.Member(sql.FieldIn(FieldNamePinyin, vs...))
+}
+
+// NamePinyinNotIn applies the NotIn predicate on the "name_pinyin" field.
+func NamePinyinNotIn(vs ...string) predicate.Member {
+	return predicate.Member(sql.FieldNotIn(FieldNamePinyin, vs...))
+}
+
+// NamePinyinGT applies the GT predicate on the "name_pinyin" field.
+func NamePinyinGT(v string) predicate.Member {
+	return predicate.Member(sql.FieldGT(FieldNamePinyin, v))
+}
+
+// NamePinyinGTE applies the GTE predicate on the "name_pinyin" field.
+func NamePinyinGTE(v string) predicate.Member {
+	return predicate.Member(sql.FieldGTE(FieldNamePinyin, v))
+}
+
+// NamePinyinLT applies the LT predicate on the "name_pinyin" field.
+func NamePinyinLT(v string) predicate.Member {
+	return predicate.Member(sql.FieldLT(FieldNamePinyin, v))
+}
+
+// NamePinyinLTE applies the LTE predicate on the "name_pinyin" field.
+func NamePinyinLTE(v string) predicate.Member {
+	return predicate.Member(sql.FieldLTE(FieldNamePinyin, v))
+}
+
+// NamePinyinContains applies the Contains predicate on the "name_pinyin" field.
+func NamePinyinContains(v string) predicate.Member {
+	return predicate.Member(sql.FieldContains(FieldNamePinyin, v))
+}
+
+// NamePinyinHasPrefix applies the HasPrefix predicate on the "name_pinyin" field.
+func NamePinyinHasPrefix(v string) predicate.Member {
+	return predicate.Member(sql.FieldHasPrefix(FieldNamePinyin, v))
+}
+
+// NamePinyinHasSuffix applies the HasSuffix predicate on the "name_pinyin" field.
+func NamePinyinHasSuffix(v string) predicate.Member {
+	return predicate.Member(sql.FieldHasSuffix(FieldNamePinyin, v))
+}
+
+// NamePinyinEqualFold applies the EqualFold predicate on the "name_pinyin" field.
+func NamePinyinEqualFold(v string) predicate.Member {
+	return predicate.Member(sql.FieldEqualFold(FieldNamePinyin, v))
+}
+
+// NamePinyinContainsFold applies the ContainsFold predicate on the "name_pinyin" field.
+func NamePinyinContainsFold(v string) predicate.Member {
+	return predicate.Member(sql.FieldContainsFold(FieldNamePinyin, v))
+}
+
+// NameInitialsEQ applies the EQ predicate on the "name_initials" field.
+func NameInitialsEQ(v string) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldNameInitials, v))
+}
+
+// NameInitialsNEQ applies the NEQ predicate on the "name_initials" field.
+func NameInitialsNEQ(v string) predicate.Member {
+	return predicate.Member(sql.FieldNEQ(FieldNameInitials, v))
+}
+
+// NameInitialsIn applies the In predicate on the "name_initials" field.
+func NameInitialsIn(vs ...string) predicate.Member {
+	return predicate.Member(sql.FieldIn(FieldNameInitials, vs...))
+}
+
+// NameInitialsNotIn applies the NotIn predicate on the "name_initials" field.
+func NameInitialsNotIn(vs ...string) predicate.Member {
+	return predicate.Member(sql.FieldNotIn(FieldNameInitials, vs...))
+}
+
+// NameInitialsGT applies the GT predicate on the "name_initials" field.
+func NameInitialsGT(v string) predicate.Member {
+	return predicate.Member(sql.FieldGT(FieldNameInitials, v))
+}
+
+// NameInitialsGTE applies the GTE predicate on the "name_initials" field.
+func NameInitialsGTE(v string) predicate.Member {
+	return predicate.Member(sql.FieldGTE(FieldNameInitials, v))
+}
+
+// NameInitialsLT applies the LT predicate on the "name_initials" field.
+func NameInitialsLT(v string) predicate.Member {
+	return predicate.Member(sql.FieldLT(FieldNameInitials, v))
+}
+
+// NameInitialsLTE applies the LTE predicate on the "name_initials" field.
+func NameInitialsLTE(v string) predicate.Member {
+	return predicate.Member(sql.FieldLTE(FieldNameInitials, v))
+}
+
+// NameInitialsContains applies the Contains predicate on the "name_initials" field.
+func NameInitialsContains(v string) predicate.Member {
+	return predicate.Member(sql.FieldContains(FieldNameInitials, v))
+}
+
+// NameInitialsHasPrefix applies the HasPrefix predicate on the "name_initials" field.
+func NameInitialsHasPrefix(v string) predicate.Member {
+	return predicate.Member(sql.FieldHasPrefix(FieldNameInitials, v))
+}
+
+// NameInitialsHasSuffix applies the HasSuffix predicate on the "name_initials" field.
+func NameInitialsHasSuffix(v string) predicate.Member {
+	return predicate.Member(sql.FieldHasSuffix(FieldNameInitials, v))
+}
+
+// NameInitialsEqualFold applies the EqualFold predicate on the "name_initials" field.
+func NameInitialsEqualFold(v string) predicate.Member {
+	return predicate.Member(sql.FieldEqualFold(FieldNameInitials, v))
+}
+
+// NameInitialsContainsFold applies the ContainsFold predicate on the "name_initials" field.
+func NameInitialsContainsFold(v string) predicate.Member {
+	return predicate.Member(sql.FieldContainsFold(FieldNameInitials, v))
 }
 
 // PhoneEQ applies the EQ predicate on the "phone" field.

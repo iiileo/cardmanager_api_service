@@ -47,6 +47,20 @@ func (_c *LedgerEntryCreate) SetType(v string) *LedgerEntryCreate {
 	return _c
 }
 
+// SetCardType sets the "card_type" field.
+func (_c *LedgerEntryCreate) SetCardType(v string) *LedgerEntryCreate {
+	_c.mutation.SetCardType(v)
+	return _c
+}
+
+// SetNillableCardType sets the "card_type" field if the given value is not nil.
+func (_c *LedgerEntryCreate) SetNillableCardType(v *string) *LedgerEntryCreate {
+	if v != nil {
+		_c.SetCardType(*v)
+	}
+	return _c
+}
+
 // SetAmount sets the "amount" field.
 func (_c *LedgerEntryCreate) SetAmount(v int) *LedgerEntryCreate {
 	_c.mutation.SetAmount(v)
@@ -217,6 +231,10 @@ func (_c *LedgerEntryCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *LedgerEntryCreate) defaults() {
+	if _, ok := _c.mutation.CardType(); !ok {
+		v := ledgerentry.DefaultCardType
+		_c.mutation.SetCardType(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := ledgerentry.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -240,6 +258,14 @@ func (_c *LedgerEntryCreate) check() error {
 	if v, ok := _c.mutation.GetType(); ok {
 		if err := ledgerentry.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.type": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.CardType(); !ok {
+		return &ValidationError{Name: "card_type", err: errors.New(`ent: missing required field "LedgerEntry.card_type"`)}
+	}
+	if v, ok := _c.mutation.CardType(); ok {
+		if err := ledgerentry.CardTypeValidator(v); err != nil {
+			return &ValidationError{Name: "card_type", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.card_type": %w`, err)}
 		}
 	}
 	if v, ok := _c.mutation.ItemName(); ok {
@@ -303,6 +329,10 @@ func (_c *LedgerEntryCreate) createSpec() (*LedgerEntry, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.GetType(); ok {
 		_spec.SetField(ledgerentry.FieldType, field.TypeString, value)
 		_node.Type = value
+	}
+	if value, ok := _c.mutation.CardType(); ok {
+		_spec.SetField(ledgerentry.FieldCardType, field.TypeString, value)
+		_node.CardType = value
 	}
 	if value, ok := _c.mutation.Amount(); ok {
 		_spec.SetField(ledgerentry.FieldAmount, field.TypeInt, value)

@@ -93,6 +93,20 @@ func (_u *LedgerEntryUpdate) SetNillableType(v *string) *LedgerEntryUpdate {
 	return _u
 }
 
+// SetCardType sets the "card_type" field.
+func (_u *LedgerEntryUpdate) SetCardType(v string) *LedgerEntryUpdate {
+	_u.mutation.SetCardType(v)
+	return _u
+}
+
+// SetNillableCardType sets the "card_type" field if the given value is not nil.
+func (_u *LedgerEntryUpdate) SetNillableCardType(v *string) *LedgerEntryUpdate {
+	if v != nil {
+		_u.SetCardType(*v)
+	}
+	return _u
+}
+
 // SetAmount sets the "amount" field.
 func (_u *LedgerEntryUpdate) SetAmount(v int) *LedgerEntryUpdate {
 	_u.mutation.ResetAmount()
@@ -359,6 +373,11 @@ func (_u *LedgerEntryUpdate) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.type": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.CardType(); ok {
+		if err := ledgerentry.CardTypeValidator(v); err != nil {
+			return &ValidationError{Name: "card_type", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.card_type": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.ItemName(); ok {
 		if err := ledgerentry.ItemNameValidator(v); err != nil {
 			return &ValidationError{Name: "item_name", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.item_name": %w`, err)}
@@ -398,6 +417,9 @@ func (_u *LedgerEntryUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(ledgerentry.FieldType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CardType(); ok {
+		_spec.SetField(ledgerentry.FieldCardType, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Amount(); ok {
 		_spec.SetField(ledgerentry.FieldAmount, field.TypeInt, value)
@@ -635,6 +657,20 @@ func (_u *LedgerEntryUpdateOne) SetType(v string) *LedgerEntryUpdateOne {
 func (_u *LedgerEntryUpdateOne) SetNillableType(v *string) *LedgerEntryUpdateOne {
 	if v != nil {
 		_u.SetType(*v)
+	}
+	return _u
+}
+
+// SetCardType sets the "card_type" field.
+func (_u *LedgerEntryUpdateOne) SetCardType(v string) *LedgerEntryUpdateOne {
+	_u.mutation.SetCardType(v)
+	return _u
+}
+
+// SetNillableCardType sets the "card_type" field if the given value is not nil.
+func (_u *LedgerEntryUpdateOne) SetNillableCardType(v *string) *LedgerEntryUpdateOne {
+	if v != nil {
+		_u.SetCardType(*v)
 	}
 	return _u
 }
@@ -918,6 +954,11 @@ func (_u *LedgerEntryUpdateOne) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.type": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.CardType(); ok {
+		if err := ledgerentry.CardTypeValidator(v); err != nil {
+			return &ValidationError{Name: "card_type", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.card_type": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.ItemName(); ok {
 		if err := ledgerentry.ItemNameValidator(v); err != nil {
 			return &ValidationError{Name: "item_name", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.item_name": %w`, err)}
@@ -974,6 +1015,9 @@ func (_u *LedgerEntryUpdateOne) sqlSave(ctx context.Context) (_node *LedgerEntry
 	}
 	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(ledgerentry.FieldType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CardType(); ok {
+		_spec.SetField(ledgerentry.FieldCardType, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Amount(); ok {
 		_spec.SetField(ledgerentry.FieldAmount, field.TypeInt, value)

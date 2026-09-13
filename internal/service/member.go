@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+"card_manager/api_service/ent"
 	"card_manager/api_service/internal/api/dto"
 	domainproduct "card_manager/api_service/internal/domain/cardproduct"
 	domainledger "card_manager/api_service/internal/domain/ledger"
@@ -148,6 +149,22 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 		}
 	}
 
+	// 储值卡、次卡每人每店仅一张：已存在则直接返回
+	if product.Type == domainproduct.TypeValue || product.Type == domainproduct.TypeCount {
+		existing, err := s.cards.GetByMemberAndType(ctx, storeID, m.ID, product.Type)
+		if err != nil {
+			return nil, ierr.Internal(err)
+		}
+		if existing != nil {
+			s.log.Info(ctx, "open card idempotent", "store_id", storeID, "member_id", m.ID, "card_id", existing.ID, "type", product.Type)
+			return &dto.OpenCardResponse{
+				Member:   &dto.MemberBrief{ID: fmt.Sprintf("%d", m.ID), Name: m.Name, Phone: m.Phone},
+				Card:     toCardDetail(existing, m),
+				LedgerID: "",
+			}, nil
+		}
+	}
+
 	cardIn, err := buildOpenCardInput(storeID, m.ID, userID, product)
 	if err != nil {
 		return nil, err
@@ -155,6 +172,7 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 	zero := 0
 	ledgerIn := domainledger.CreateInput{
 		Type:       domainledger.TypeOpen,
+		CardType:   product.Type,
 		OperatorID: userID,
 	}
 	switch product.Type {
@@ -175,6 +193,16 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 
 	card, entry, err := s.txns.OpenCard(ctx, cardIn, ledgerIn)
 	if err != nil {
+		if (product.Type == domainproduct.TypeValue || product.Type == domainproduct.TypeCount) && ent.IsConstraintError(err) {
+			existing, getErr := s.cards.GetByMemberAndType(ctx, storeID, m.ID, product.Type)
+			if getErr == nil && existing != nil {
+				return &dto.OpenCardResponse{
+					Member:   &dto.MemberBrief{ID: fmt.Sprintf("%d", m.ID), Name: m.Name, Phone: m.Phone},
+					Card:     toCardDetail(existing, m),
+					LedgerID: "",
+				}, nil
+			}
+		}
 		return nil, ierr.Internal(err)
 	}
 	s.log.Info(ctx, "card opened", "store_id", storeID, "member_id", m.ID, "card_id", card.ID)

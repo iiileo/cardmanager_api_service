@@ -30,6 +30,7 @@ func NewRouter(
 	memberHandler *v1.MemberHandler,
 	cardHandler *v1.CardHandler,
 	ledgerHandler *v1.LedgerHandler,
+	dashboardHandler *v1.DashboardHandler,
 	storeSvc service.StoreService,
 ) *Router {
 	if cfg.Server.Mode == "local" {
@@ -86,6 +87,9 @@ func NewRouter(
 			storeScoped := authed.Group("")
 			storeScoped.Use(middleware.RequireStore(storeSvc))
 			{
+				// 首页统计
+				storeScoped.GET("/home/stats", dashboardHandler.HomeStats)
+
 				// Staff
 				staff := storeScoped.Group("/staff")
 				{
@@ -120,11 +124,28 @@ func NewRouter(
 					cards.POST("/:id/consume", cardHandler.Consume)
 				}
 
-				// Ledger 流水
+				// Ledger 流水（全量 / 混合列表）
 				ledger := storeScoped.Group("/ledger")
 				{
 					ledger.GET("", ledgerHandler.List)
+					ledger.GET("/stats", ledgerHandler.StatsTxns)
 					ledger.GET("/:id", ledgerHandler.Get)
+				}
+
+				// 充值记录
+				recharges := storeScoped.Group("/recharges")
+				{
+					recharges.GET("", ledgerHandler.ListRecharges)
+					recharges.GET("/stats", ledgerHandler.StatsRecharges)
+					recharges.GET("/:id", ledgerHandler.GetRecharge)
+				}
+
+				// 消费记录（含套餐 items 明细）
+				consumes := storeScoped.Group("/consumes")
+				{
+					consumes.GET("", ledgerHandler.ListConsumes)
+					consumes.GET("/stats", ledgerHandler.StatsConsumes)
+					consumes.GET("/:id", ledgerHandler.GetConsume)
 				}
 			}
 		}

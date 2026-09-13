@@ -27,8 +27,17 @@ func (h *LedgerHandler) List(c *gin.Context) {
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 	resp, err := h.service.List(
 		c.Request.Context(), userID, storeID,
-		c.Query("type"), c.Query("from"), c.Query("to"),
-		page, pageSize,
+		service.LedgerListQuery{
+			Kind:     c.Query("kind"),
+			Type:     c.Query("type"),
+			CardType: c.Query("card_type"),
+			MemberID: c.Query("member_id"),
+			CardID:   c.Query("card_id"),
+			From:     c.Query("from"),
+			To:       c.Query("to"),
+			Page:     page,
+			PageSize: pageSize,
+		},
 	)
 	if err != nil {
 		response.Fail(c, err)
@@ -53,4 +62,125 @@ func (h *LedgerHandler) Get(c *gin.Context) {
 		return
 	}
 	response.OK(c, resp)
+}
+
+func (h *LedgerHandler) ListRecharges(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	resp, err := h.service.ListRecharges(c.Request.Context(), userID, storeID, listQueryFrom(c))
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
+func (h *LedgerHandler) GetRecharge(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	id, err := service.ParseLedgerID(c.Param("id"))
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	resp, err := h.service.GetRecharge(c.Request.Context(), userID, storeID, id)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
+func (h *LedgerHandler) StatsTxns(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	q := listQueryFrom(c)
+	if q.Kind == "" {
+		q.Kind = "txn"
+	}
+	resp, err := h.service.StatsTxns(c.Request.Context(), userID, storeID, q)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
+func (h *LedgerHandler) StatsRecharges(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	resp, err := h.service.StatsRecharges(c.Request.Context(), userID, storeID, listQueryFrom(c))
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
+func (h *LedgerHandler) ListConsumes(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	resp, err := h.service.ListConsumes(c.Request.Context(), userID, storeID, listQueryFrom(c))
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
+func (h *LedgerHandler) GetConsume(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	id, err := service.ParseLedgerID(c.Param("id"))
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	resp, err := h.service.GetConsume(c.Request.Context(), userID, storeID, id)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
+func (h *LedgerHandler) StatsConsumes(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	resp, err := h.service.StatsConsumes(c.Request.Context(), userID, storeID, listQueryFrom(c))
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
+func listQueryFrom(c *gin.Context) service.LedgerListQuery {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+	return service.LedgerListQuery{
+		Kind:     c.Query("kind"),
+		Type:     c.Query("type"),
+		CardType: c.Query("card_type"),
+		MemberID: c.Query("member_id"),
+		CardID:   c.Query("card_id"),
+		From:     c.Query("from"),
+		To:       c.Query("to"),
+		Page:     page,
+		PageSize: pageSize,
+	}
 }

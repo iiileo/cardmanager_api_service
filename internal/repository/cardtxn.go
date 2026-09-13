@@ -52,6 +52,7 @@ func (r *cardTxnRepository) createLedger(ctx context.Context, tx *ent.Tx, in dom
 		SetMemberID(in.MemberID).
 		SetCardID(in.CardID).
 		SetType(in.Type).
+		SetCardType(in.CardType).
 		SetOperatorID(in.OperatorID)
 	if in.Amount != nil {
 		b.SetAmount(*in.Amount)
@@ -117,6 +118,7 @@ func (r *cardTxnRepository) Recharge(ctx context.Context, cardID int64, amount i
 			MemberID:     c.MemberID,
 			CardID:       c.ID,
 			Type:         domainledger.TypeRecharge,
+			CardType:     domaincard.TypeValue,
 			Amount:       &amount,
 			BalanceAfter: &bal,
 			Remark:       remark,
@@ -161,6 +163,7 @@ func (r *cardTxnRepository) ConsumeValue(ctx context.Context, cardID int64, amou
 			MemberID:     c.MemberID,
 			CardID:       c.ID,
 			Type:         domainledger.TypeConsumeValue,
+			CardType:     domaincard.TypeValue,
 			Amount:       &amt,
 			BalanceAfter: &bal,
 			Remark:       remark,
@@ -208,6 +211,7 @@ func (r *cardTxnRepository) ConsumeCount(ctx context.Context, cardID int64, time
 			MemberID:   c.MemberID,
 			CardID:     c.ID,
 			Type:       domainledger.TypeConsumeCount,
+			CardType:   domaincard.TypeCount,
 			Times:      &neg,
 			TimesAfter: &after,
 			Remark:     remark,
@@ -293,6 +297,7 @@ func (r *cardTxnRepository) ConsumePack(ctx context.Context, cardID int64, items
 			MemberID:   c.MemberID,
 			CardID:     c.ID,
 			Type:       domainledger.TypeConsumePack,
+			CardType:   domaincard.TypePack,
 			Times:      &neg,
 			ItemName:   &itemName,
 			Remark:     remark,
@@ -355,6 +360,9 @@ func (r *cardTxnRepository) OpenCard(ctx context.Context, cardIn domaincard.Crea
 		ledgerIn.CardID = c.ID
 		ledgerIn.MemberID = c.MemberID
 		ledgerIn.StoreID = c.StoreID
+		if ledgerIn.CardType == "" {
+			ledgerIn.CardType = cardIn.Type
+		}
 		e, ledItems, err := r.createLedger(ctx, tx, ledgerIn)
 		if err != nil {
 			return err

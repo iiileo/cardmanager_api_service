@@ -27,6 +27,8 @@ func (Member) Fields() []ent.Field {
 		field.Int64("id"),
 		field.Int64("store_id"),
 		field.String("name").MaxLen(32).NotEmpty(),
+		field.String("name_pinyin").MaxLen(128).Default(""),  // 全拼，如 liming
+		field.String("name_initials").MaxLen(32).Default(""), // 首拼，如 lm
 		field.String("phone").MaxLen(20).NotEmpty(),
 		field.String("source").MaxLen(32).Optional().Nillable(),
 		field.Time("created_at").Default(time.Now).Immutable(),
@@ -45,5 +47,7 @@ func (Member) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("store_id", "phone").Unique(),
 		index.Fields("store_id", "name"),
+		index.Fields("store_id", "name_pinyin"),
+		index.Fields("store_id", "name_initials"),
 	}
 }

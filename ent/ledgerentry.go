@@ -27,6 +27,8 @@ type LedgerEntry struct {
 	CardID int64 `json:"card_id,omitempty"`
 	// Type holds the value of the "type" field.
 	Type string `json:"type,omitempty"`
+	// CardType holds the value of the "card_type" field.
+	CardType string `json:"card_type,omitempty"`
 	// Amount holds the value of the "amount" field.
 	Amount *int `json:"amount,omitempty"`
 	// Times holds the value of the "times" field.
@@ -100,7 +102,7 @@ func (*LedgerEntry) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case ledgerentry.FieldID, ledgerentry.FieldStoreID, ledgerentry.FieldMemberID, ledgerentry.FieldCardID, ledgerentry.FieldAmount, ledgerentry.FieldTimes, ledgerentry.FieldBalanceAfter, ledgerentry.FieldTimesAfter, ledgerentry.FieldOperatorID:
 			values[i] = new(sql.NullInt64)
-		case ledgerentry.FieldType, ledgerentry.FieldItemName, ledgerentry.FieldRemark:
+		case ledgerentry.FieldType, ledgerentry.FieldCardType, ledgerentry.FieldItemName, ledgerentry.FieldRemark:
 			values[i] = new(sql.NullString)
 		case ledgerentry.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -148,6 +150,12 @@ func (_m *LedgerEntry) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
 			} else if value.Valid {
 				_m.Type = value.String
+			}
+		case ledgerentry.FieldCardType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field card_type", values[i])
+			} else if value.Valid {
+				_m.CardType = value.String
 			}
 		case ledgerentry.FieldAmount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -265,6 +273,9 @@ func (_m *LedgerEntry) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(_m.Type)
+	builder.WriteString(", ")
+	builder.WriteString("card_type=")
+	builder.WriteString(_m.CardType)
 	builder.WriteString(", ")
 	if v := _m.Amount; v != nil {
 		builder.WriteString("amount=")

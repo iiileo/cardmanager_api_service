@@ -18,6 +18,10 @@ const (
 	FieldStoreID = "store_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldNamePinyin holds the string denoting the name_pinyin field in the database.
+	FieldNamePinyin = "name_pinyin"
+	// FieldNameInitials holds the string denoting the name_initials field in the database.
+	FieldNameInitials = "name_initials"
 	// FieldPhone holds the string denoting the phone field in the database.
 	FieldPhone = "phone"
 	// FieldSource holds the string denoting the source field in the database.
@@ -53,6 +57,8 @@ var Columns = []string{
 	FieldID,
 	FieldStoreID,
 	FieldName,
+	FieldNamePinyin,
+	FieldNameInitials,
 	FieldPhone,
 	FieldSource,
 	FieldCreatedAt,
@@ -72,6 +78,14 @@ func ValidColumn(column string) bool {
 var (
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// DefaultNamePinyin holds the default value on creation for the "name_pinyin" field.
+	DefaultNamePinyin string
+	// NamePinyinValidator is a validator for the "name_pinyin" field. It is called by the builders before save.
+	NamePinyinValidator func(string) error
+	// DefaultNameInitials holds the default value on creation for the "name_initials" field.
+	DefaultNameInitials string
+	// NameInitialsValidator is a validator for the "name_initials" field. It is called by the builders before save.
+	NameInitialsValidator func(string) error
 	// PhoneValidator is a validator for the "phone" field. It is called by the builders before save.
 	PhoneValidator func(string) error
 	// SourceValidator is a validator for the "source" field. It is called by the builders before save.
@@ -100,6 +114,16 @@ func ByStoreID(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByNamePinyin orders the results by the name_pinyin field.
+func ByNamePinyin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNamePinyin, opts...).ToFunc()
+}
+
+// ByNameInitials orders the results by the name_initials field.
+func ByNameInitials(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNameInitials, opts...).ToFunc()
 }
 
 // ByPhone orders the results by the phone field.

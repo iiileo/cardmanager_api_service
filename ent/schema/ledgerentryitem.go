@@ -45,5 +45,8 @@ func (LedgerEntryItem) Edges() []ent.Edge {
 func (LedgerEntryItem) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("ledger_id"),
+		// 套餐项目消耗统计
+		index.Fields("product_item_id"),
+		index.Fields("name_snapshot"),
 	}
 }

@@ -117,5 +117,6 @@ type PackDeductItem struct {
 
 type Repository interface {
 	GetByID(ctx context.Context, id int64) (*Card, error)
+	GetByMemberAndType(ctx context.Context, storeID, memberID int64, typ string) (*Card, error)
 	ListByMember(ctx context.Context, storeID, memberID int64) ([]*Card, error)
 }

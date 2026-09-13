@@ -21,6 +21,10 @@ type Member struct {
 	StoreID int64 `json:"store_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// NamePinyin holds the value of the "name_pinyin" field.
+	NamePinyin string `json:"name_pinyin,omitempty"`
+	// NameInitials holds the value of the "name_initials" field.
+	NameInitials string `json:"name_initials,omitempty"`
 	// Phone holds the value of the "phone" field.
 	Phone string `json:"phone,omitempty"`
 	// Source holds the value of the "source" field.
@@ -71,7 +75,7 @@ func (*Member) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case member.FieldID, member.FieldStoreID:
 			values[i] = new(sql.NullInt64)
-		case member.FieldName, member.FieldPhone, member.FieldSource:
+		case member.FieldName, member.FieldNamePinyin, member.FieldNameInitials, member.FieldPhone, member.FieldSource:
 			values[i] = new(sql.NullString)
 		case member.FieldCreatedAt, member.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -107,6 +111,18 @@ func (_m *Member) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				_m.Name = value.String
+			}
+		case member.FieldNamePinyin:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name_pinyin", values[i])
+			} else if value.Valid {
+				_m.NamePinyin = value.String
+			}
+		case member.FieldNameInitials:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name_initials", values[i])
+			} else if value.Valid {
+				_m.NameInitials = value.String
 			}
 		case member.FieldPhone:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -184,6 +200,12 @@ func (_m *Member) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
+	builder.WriteString(", ")
+	builder.WriteString("name_pinyin=")
+	builder.WriteString(_m.NamePinyin)
+	builder.WriteString(", ")
+	builder.WriteString("name_initials=")
+	builder.WriteString(_m.NameInitials)
 	builder.WriteString(", ")
 	builder.WriteString("phone=")
 	builder.WriteString(_m.Phone)

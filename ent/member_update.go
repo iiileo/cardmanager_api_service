@@ -65,6 +65,34 @@ func (_u *MemberUpdate) SetNillableName(v *string) *MemberUpdate {
 	return _u
 }
 
+// SetNamePinyin sets the "name_pinyin" field.
+func (_u *MemberUpdate) SetNamePinyin(v string) *MemberUpdate {
+	_u.mutation.SetNamePinyin(v)
+	return _u
+}
+
+// SetNillableNamePinyin sets the "name_pinyin" field if the given value is not nil.
+func (_u *MemberUpdate) SetNillableNamePinyin(v *string) *MemberUpdate {
+	if v != nil {
+		_u.SetNamePinyin(*v)
+	}
+	return _u
+}
+
+// SetNameInitials sets the "name_initials" field.
+func (_u *MemberUpdate) SetNameInitials(v string) *MemberUpdate {
+	_u.mutation.SetNameInitials(v)
+	return _u
+}
+
+// SetNillableNameInitials sets the "name_initials" field if the given value is not nil.
+func (_u *MemberUpdate) SetNillableNameInitials(v *string) *MemberUpdate {
+	if v != nil {
+		_u.SetNameInitials(*v)
+	}
+	return _u
+}
+
 // SetPhone sets the "phone" field.
 func (_u *MemberUpdate) SetPhone(v string) *MemberUpdate {
 	_u.mutation.SetPhone(v)
@@ -225,6 +253,16 @@ func (_u *MemberUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Member.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.NamePinyin(); ok {
+		if err := member.NamePinyinValidator(v); err != nil {
+			return &ValidationError{Name: "name_pinyin", err: fmt.Errorf(`ent: validator failed for field "Member.name_pinyin": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.NameInitials(); ok {
+		if err := member.NameInitialsValidator(v); err != nil {
+			return &ValidationError{Name: "name_initials", err: fmt.Errorf(`ent: validator failed for field "Member.name_initials": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Phone(); ok {
 		if err := member.PhoneValidator(v); err != nil {
 			return &ValidationError{Name: "phone", err: fmt.Errorf(`ent: validator failed for field "Member.phone": %w`, err)}
@@ -258,6 +296,12 @@ func (_u *MemberUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(member.FieldName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.NamePinyin(); ok {
+		_spec.SetField(member.FieldNamePinyin, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.NameInitials(); ok {
+		_spec.SetField(member.FieldNameInitials, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Phone(); ok {
 		_spec.SetField(member.FieldPhone, field.TypeString, value)
@@ -412,6 +456,34 @@ func (_u *MemberUpdateOne) SetName(v string) *MemberUpdateOne {
 func (_u *MemberUpdateOne) SetNillableName(v *string) *MemberUpdateOne {
 	if v != nil {
 		_u.SetName(*v)
+	}
+	return _u
+}
+
+// SetNamePinyin sets the "name_pinyin" field.
+func (_u *MemberUpdateOne) SetNamePinyin(v string) *MemberUpdateOne {
+	_u.mutation.SetNamePinyin(v)
+	return _u
+}
+
+// SetNillableNamePinyin sets the "name_pinyin" field if the given value is not nil.
+func (_u *MemberUpdateOne) SetNillableNamePinyin(v *string) *MemberUpdateOne {
+	if v != nil {
+		_u.SetNamePinyin(*v)
+	}
+	return _u
+}
+
+// SetNameInitials sets the "name_initials" field.
+func (_u *MemberUpdateOne) SetNameInitials(v string) *MemberUpdateOne {
+	_u.mutation.SetNameInitials(v)
+	return _u
+}
+
+// SetNillableNameInitials sets the "name_initials" field if the given value is not nil.
+func (_u *MemberUpdateOne) SetNillableNameInitials(v *string) *MemberUpdateOne {
+	if v != nil {
+		_u.SetNameInitials(*v)
 	}
 	return _u
 }
@@ -589,6 +661,16 @@ func (_u *MemberUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Member.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.NamePinyin(); ok {
+		if err := member.NamePinyinValidator(v); err != nil {
+			return &ValidationError{Name: "name_pinyin", err: fmt.Errorf(`ent: validator failed for field "Member.name_pinyin": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.NameInitials(); ok {
+		if err := member.NameInitialsValidator(v); err != nil {
+			return &ValidationError{Name: "name_initials", err: fmt.Errorf(`ent: validator failed for field "Member.name_initials": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Phone(); ok {
 		if err := member.PhoneValidator(v); err != nil {
 			return &ValidationError{Name: "phone", err: fmt.Errorf(`ent: validator failed for field "Member.phone": %w`, err)}
@@ -639,6 +721,12 @@ func (_u *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err erro
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(member.FieldName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.NamePinyin(); ok {
+		_spec.SetField(member.FieldNamePinyin, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.NameInitials(); ok {
+		_spec.SetField(member.FieldNameInitials, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Phone(); ok {
 		_spec.SetField(member.FieldPhone, field.TypeString, value)

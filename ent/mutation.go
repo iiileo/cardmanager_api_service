@@ -3251,6 +3251,7 @@ type LedgerEntryMutation struct {
 	store_id         *int64
 	addstore_id      *int64
 	_type            *string
+	card_type        *string
 	amount           *int
 	addamount        *int
 	times            *int
@@ -3543,6 +3544,42 @@ func (m *LedgerEntryMutation) OldType(ctx context.Context) (v string, err error)
 // ResetType resets all changes to the "type" field.
 func (m *LedgerEntryMutation) ResetType() {
 	m._type = nil
+}
+
+// SetCardType sets the "card_type" field.
+func (m *LedgerEntryMutation) SetCardType(s string) {
+	m.card_type = &s
+}
+
+// CardType returns the value of the "card_type" field in the mutation.
+func (m *LedgerEntryMutation) CardType() (r string, exists bool) {
+	v := m.card_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCardType returns the old "card_type" field's value of the LedgerEntry entity.
+// If the LedgerEntry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LedgerEntryMutation) OldCardType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCardType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCardType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCardType: %w", err)
+	}
+	return oldValue.CardType, nil
+}
+
+// ResetCardType resets all changes to the "card_type" field.
+func (m *LedgerEntryMutation) ResetCardType() {
+	m.card_type = nil
 }
 
 // SetAmount sets the "amount" field.
@@ -4157,7 +4194,7 @@ func (m *LedgerEntryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LedgerEntryMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 13)
 	if m.store_id != nil {
 		fields = append(fields, ledgerentry.FieldStoreID)
 	}
@@ -4169,6 +4206,9 @@ func (m *LedgerEntryMutation) Fields() []string {
 	}
 	if m._type != nil {
 		fields = append(fields, ledgerentry.FieldType)
+	}
+	if m.card_type != nil {
+		fields = append(fields, ledgerentry.FieldCardType)
 	}
 	if m.amount != nil {
 		fields = append(fields, ledgerentry.FieldAmount)
@@ -4210,6 +4250,8 @@ func (m *LedgerEntryMutation) Field(name string) (ent.Value, bool) {
 		return m.CardID()
 	case ledgerentry.FieldType:
 		return m.GetType()
+	case ledgerentry.FieldCardType:
+		return m.CardType()
 	case ledgerentry.FieldAmount:
 		return m.Amount()
 	case ledgerentry.FieldTimes:
@@ -4243,6 +4285,8 @@ func (m *LedgerEntryMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldCardID(ctx)
 	case ledgerentry.FieldType:
 		return m.OldType(ctx)
+	case ledgerentry.FieldCardType:
+		return m.OldCardType(ctx)
 	case ledgerentry.FieldAmount:
 		return m.OldAmount(ctx)
 	case ledgerentry.FieldTimes:
@@ -4295,6 +4339,13 @@ func (m *LedgerEntryMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetType(v)
+		return nil
+	case ledgerentry.FieldCardType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCardType(v)
 		return nil
 	case ledgerentry.FieldAmount:
 		v, ok := value.(int)
@@ -4526,6 +4577,9 @@ func (m *LedgerEntryMutation) ResetField(name string) error {
 		return nil
 	case ledgerentry.FieldType:
 		m.ResetType()
+		return nil
+	case ledgerentry.FieldCardType:
+		m.ResetCardType()
 		return nil
 	case ledgerentry.FieldAmount:
 		m.ResetAmount()
@@ -5475,6 +5529,8 @@ type MemberMutation struct {
 	store_id       *int64
 	addstore_id    *int64
 	name           *string
+	name_pinyin    *string
+	name_initials  *string
 	phone          *string
 	source         *string
 	created_at     *time.Time
@@ -5685,6 +5741,78 @@ func (m *MemberMutation) OldName(ctx context.Context) (v string, err error) {
 // ResetName resets all changes to the "name" field.
 func (m *MemberMutation) ResetName() {
 	m.name = nil
+}
+
+// SetNamePinyin sets the "name_pinyin" field.
+func (m *MemberMutation) SetNamePinyin(s string) {
+	m.name_pinyin = &s
+}
+
+// NamePinyin returns the value of the "name_pinyin" field in the mutation.
+func (m *MemberMutation) NamePinyin() (r string, exists bool) {
+	v := m.name_pinyin
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNamePinyin returns the old "name_pinyin" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldNamePinyin(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNamePinyin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNamePinyin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNamePinyin: %w", err)
+	}
+	return oldValue.NamePinyin, nil
+}
+
+// ResetNamePinyin resets all changes to the "name_pinyin" field.
+func (m *MemberMutation) ResetNamePinyin() {
+	m.name_pinyin = nil
+}
+
+// SetNameInitials sets the "name_initials" field.
+func (m *MemberMutation) SetNameInitials(s string) {
+	m.name_initials = &s
+}
+
+// NameInitials returns the value of the "name_initials" field in the mutation.
+func (m *MemberMutation) NameInitials() (r string, exists bool) {
+	v := m.name_initials
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNameInitials returns the old "name_initials" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldNameInitials(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNameInitials is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNameInitials requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNameInitials: %w", err)
+	}
+	return oldValue.NameInitials, nil
+}
+
+// ResetNameInitials resets all changes to the "name_initials" field.
+func (m *MemberMutation) ResetNameInitials() {
+	m.name_initials = nil
 }
 
 // SetPhone sets the "phone" field.
@@ -5986,12 +6114,18 @@ func (m *MemberMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MemberMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 8)
 	if m.store_id != nil {
 		fields = append(fields, member.FieldStoreID)
 	}
 	if m.name != nil {
 		fields = append(fields, member.FieldName)
+	}
+	if m.name_pinyin != nil {
+		fields = append(fields, member.FieldNamePinyin)
+	}
+	if m.name_initials != nil {
+		fields = append(fields, member.FieldNameInitials)
 	}
 	if m.phone != nil {
 		fields = append(fields, member.FieldPhone)
@@ -6017,6 +6151,10 @@ func (m *MemberMutation) Field(name string) (ent.Value, bool) {
 		return m.StoreID()
 	case member.FieldName:
 		return m.Name()
+	case member.FieldNamePinyin:
+		return m.NamePinyin()
+	case member.FieldNameInitials:
+		return m.NameInitials()
 	case member.FieldPhone:
 		return m.Phone()
 	case member.FieldSource:
@@ -6038,6 +6176,10 @@ func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldStoreID(ctx)
 	case member.FieldName:
 		return m.OldName(ctx)
+	case member.FieldNamePinyin:
+		return m.OldNamePinyin(ctx)
+	case member.FieldNameInitials:
+		return m.OldNameInitials(ctx)
 	case member.FieldPhone:
 		return m.OldPhone(ctx)
 	case member.FieldSource:
@@ -6068,6 +6210,20 @@ func (m *MemberMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case member.FieldNamePinyin:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNamePinyin(v)
+		return nil
+	case member.FieldNameInitials:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNameInitials(v)
 		return nil
 	case member.FieldPhone:
 		v, ok := value.(string)
@@ -6175,6 +6331,12 @@ func (m *MemberMutation) ResetField(name string) error {
 		return nil
 	case member.FieldName:
 		m.ResetName()
+		return nil
+	case member.FieldNamePinyin:
+		m.ResetNamePinyin()
+		return nil
+	case member.FieldNameInitials:
+		m.ResetNameInitials()
 		return nil
 	case member.FieldPhone:
 		m.ResetPhone()

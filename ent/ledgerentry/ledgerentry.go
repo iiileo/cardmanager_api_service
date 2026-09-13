@@ -22,6 +22,8 @@ const (
 	FieldCardID = "card_id"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
+	// FieldCardType holds the string denoting the card_type field in the database.
+	FieldCardType = "card_type"
 	// FieldAmount holds the string denoting the amount field in the database.
 	FieldAmount = "amount"
 	// FieldTimes holds the string denoting the times field in the database.
@@ -76,6 +78,7 @@ var Columns = []string{
 	FieldMemberID,
 	FieldCardID,
 	FieldType,
+	FieldCardType,
 	FieldAmount,
 	FieldTimes,
 	FieldItemName,
@@ -99,6 +102,10 @@ func ValidColumn(column string) bool {
 var (
 	// TypeValidator is a validator for the "type" field. It is called by the builders before save.
 	TypeValidator func(string) error
+	// DefaultCardType holds the default value on creation for the "card_type" field.
+	DefaultCardType string
+	// CardTypeValidator is a validator for the "card_type" field. It is called by the builders before save.
+	CardTypeValidator func(string) error
 	// ItemNameValidator is a validator for the "item_name" field. It is called by the builders before save.
 	ItemNameValidator func(string) error
 	// RemarkValidator is a validator for the "remark" field. It is called by the builders before save.
@@ -133,6 +140,11 @@ func ByCardID(opts ...sql.OrderTermOption) OrderOption {
 // ByType orders the results by the type field.
 func ByType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldType, opts...).ToFunc()
+}
+
+// ByCardType orders the results by the card_type field.
+func ByCardType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCardType, opts...).ToFunc()
 }
 
 // ByAmount orders the results by the amount field.

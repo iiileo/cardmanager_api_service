@@ -34,6 +34,34 @@ func (_c *MemberCreate) SetName(v string) *MemberCreate {
 	return _c
 }
 
+// SetNamePinyin sets the "name_pinyin" field.
+func (_c *MemberCreate) SetNamePinyin(v string) *MemberCreate {
+	_c.mutation.SetNamePinyin(v)
+	return _c
+}
+
+// SetNillableNamePinyin sets the "name_pinyin" field if the given value is not nil.
+func (_c *MemberCreate) SetNillableNamePinyin(v *string) *MemberCreate {
+	if v != nil {
+		_c.SetNamePinyin(*v)
+	}
+	return _c
+}
+
+// SetNameInitials sets the "name_initials" field.
+func (_c *MemberCreate) SetNameInitials(v string) *MemberCreate {
+	_c.mutation.SetNameInitials(v)
+	return _c
+}
+
+// SetNillableNameInitials sets the "name_initials" field if the given value is not nil.
+func (_c *MemberCreate) SetNillableNameInitials(v *string) *MemberCreate {
+	if v != nil {
+		_c.SetNameInitials(*v)
+	}
+	return _c
+}
+
 // SetPhone sets the "phone" field.
 func (_c *MemberCreate) SetPhone(v string) *MemberCreate {
 	_c.mutation.SetPhone(v)
@@ -153,6 +181,14 @@ func (_c *MemberCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *MemberCreate) defaults() {
+	if _, ok := _c.mutation.NamePinyin(); !ok {
+		v := member.DefaultNamePinyin
+		_c.mutation.SetNamePinyin(v)
+	}
+	if _, ok := _c.mutation.NameInitials(); !ok {
+		v := member.DefaultNameInitials
+		_c.mutation.SetNameInitials(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := member.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -174,6 +210,22 @@ func (_c *MemberCreate) check() error {
 	if v, ok := _c.mutation.Name(); ok {
 		if err := member.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Member.name": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.NamePinyin(); !ok {
+		return &ValidationError{Name: "name_pinyin", err: errors.New(`ent: missing required field "Member.name_pinyin"`)}
+	}
+	if v, ok := _c.mutation.NamePinyin(); ok {
+		if err := member.NamePinyinValidator(v); err != nil {
+			return &ValidationError{Name: "name_pinyin", err: fmt.Errorf(`ent: validator failed for field "Member.name_pinyin": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.NameInitials(); !ok {
+		return &ValidationError{Name: "name_initials", err: errors.New(`ent: missing required field "Member.name_initials"`)}
+	}
+	if v, ok := _c.mutation.NameInitials(); ok {
+		if err := member.NameInitialsValidator(v); err != nil {
+			return &ValidationError{Name: "name_initials", err: fmt.Errorf(`ent: validator failed for field "Member.name_initials": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.Phone(); !ok {
@@ -234,6 +286,14 @@ func (_c *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(member.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := _c.mutation.NamePinyin(); ok {
+		_spec.SetField(member.FieldNamePinyin, field.TypeString, value)
+		_node.NamePinyin = value
+	}
+	if value, ok := _c.mutation.NameInitials(); ok {
+		_spec.SetField(member.FieldNameInitials, field.TypeString, value)
+		_node.NameInitials = value
 	}
 	if value, ok := _c.mutation.Phone(); ok {
 		_spec.SetField(member.FieldPhone, field.TypeString, value)

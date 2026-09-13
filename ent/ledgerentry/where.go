@@ -75,6 +75,11 @@ func Type(v string) predicate.LedgerEntry {
 	return predicate.LedgerEntry(sql.FieldEQ(FieldType, v))
 }
 
+// CardType applies equality check predicate on the "card_type" field. It's identical to CardTypeEQ.
+func CardType(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldEQ(FieldCardType, v))
+}
+
 // Amount applies equality check predicate on the "amount" field. It's identical to AmountEQ.
 func Amount(v int) predicate.LedgerEntry {
 	return predicate.LedgerEntry(sql.FieldEQ(FieldAmount, v))
@@ -258,6 +263,71 @@ func TypeEqualFold(v string) predicate.LedgerEntry {
 // TypeContainsFold applies the ContainsFold predicate on the "type" field.
 func TypeContainsFold(v string) predicate.LedgerEntry {
 	return predicate.LedgerEntry(sql.FieldContainsFold(FieldType, v))
+}
+
+// CardTypeEQ applies the EQ predicate on the "card_type" field.
+func CardTypeEQ(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldEQ(FieldCardType, v))
+}
+
+// CardTypeNEQ applies the NEQ predicate on the "card_type" field.
+func CardTypeNEQ(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldNEQ(FieldCardType, v))
+}
+
+// CardTypeIn applies the In predicate on the "card_type" field.
+func CardTypeIn(vs ...string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldIn(FieldCardType, vs...))
+}
+
+// CardTypeNotIn applies the NotIn predicate on the "card_type" field.
+func CardTypeNotIn(vs ...string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldNotIn(FieldCardType, vs...))
+}
+
+// CardTypeGT applies the GT predicate on the "card_type" field.
+func CardTypeGT(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldGT(FieldCardType, v))
+}
+
+// CardTypeGTE applies the GTE predicate on the "card_type" field.
+func CardTypeGTE(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldGTE(FieldCardType, v))
+}
+
+// CardTypeLT applies the LT predicate on the "card_type" field.
+func CardTypeLT(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldLT(FieldCardType, v))
+}
+
+// CardTypeLTE applies the LTE predicate on the "card_type" field.
+func CardTypeLTE(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldLTE(FieldCardType, v))
+}
+
+// CardTypeContains applies the Contains predicate on the "card_type" field.
+func CardTypeContains(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldContains(FieldCardType, v))
+}
+
+// CardTypeHasPrefix applies the HasPrefix predicate on the "card_type" field.
+func CardTypeHasPrefix(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldHasPrefix(FieldCardType, v))
+}
+
+// CardTypeHasSuffix applies the HasSuffix predicate on the "card_type" field.
+func CardTypeHasSuffix(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldHasSuffix(FieldCardType, v))
+}
+
+// CardTypeEqualFold applies the EqualFold predicate on the "card_type" field.
+func CardTypeEqualFold(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldEqualFold(FieldCardType, v))
+}
+
+// CardTypeContainsFold applies the ContainsFold predicate on the "card_type" field.
+func CardTypeContainsFold(v string) predicate.LedgerEntry {
+	return predicate.LedgerEntry(sql.FieldContainsFold(FieldCardType, v))
 }
 
 // AmountEQ applies the EQ predicate on the "amount" field.

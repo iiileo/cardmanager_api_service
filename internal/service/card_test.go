@@ -23,6 +23,17 @@ type memCardRepo struct {
 func (m *memCardRepo) GetByID(_ context.Context, id int64) (*domaincard.Card, error) {
 	return m.byID[id], nil
 }
+func (m *memCardRepo) GetByMemberAndType(_ context.Context, storeID, memberID int64, typ string) (*domaincard.Card, error) {
+	var best *domaincard.Card
+	for _, c := range m.byID {
+		if c.StoreID == storeID && c.MemberID == memberID && c.Type == typ {
+			if best == nil || c.ID > best.ID {
+				best = c
+			}
+		}
+	}
+	return best, nil
+}
 func (m *memCardRepo) ListByMember(_ context.Context, storeID, memberID int64) ([]*domaincard.Card, error) {
 	var out []*domaincard.Card
 	for _, c := range m.byID {
@@ -48,6 +59,9 @@ func (m *memCustomerRepo) Create(context.Context, domainmember.CreateInput) (*do
 }
 func (m *memCustomerRepo) ListByStore(context.Context, int64, string, int, int) ([]*domainmember.Member, int, error) {
 	return nil, 0, nil
+}
+func (m *memCustomerRepo) BackfillNamePinyin(context.Context) (int, error) {
+	return 0, nil
 }
 
 type memTxnRepo struct {

@@ -140,6 +140,7 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "store_id", Type: field.TypeInt64},
 		{Name: "type", Type: field.TypeString, Size: 32},
+		{Name: "card_type", Type: field.TypeString, Size: 16, Default: ""},
 		{Name: "amount", Type: field.TypeInt, Nullable: true},
 		{Name: "times", Type: field.TypeInt, Nullable: true},
 		{Name: "item_name", Type: field.TypeString, Nullable: true, Size: 64},
@@ -159,13 +160,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "ledger_entries_members_ledgers",
-				Columns:    []*schema.Column{LedgerEntriesColumns[11]},
+				Columns:    []*schema.Column{LedgerEntriesColumns[12]},
 				RefColumns: []*schema.Column{MembersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "ledger_entries_member_cards_ledgers",
-				Columns:    []*schema.Column{LedgerEntriesColumns[12]},
+				Columns:    []*schema.Column{LedgerEntriesColumns[13]},
 				RefColumns: []*schema.Column{MemberCardsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -174,27 +175,37 @@ var (
 			{
 				Name:    "ledgerentry_store_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[10]},
+				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[11]},
 			},
 			{
 				Name:    "ledgerentry_member_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LedgerEntriesColumns[11], LedgerEntriesColumns[10]},
+				Columns: []*schema.Column{LedgerEntriesColumns[12], LedgerEntriesColumns[11]},
 			},
 			{
 				Name:    "ledgerentry_operator_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LedgerEntriesColumns[9], LedgerEntriesColumns[10]},
+				Columns: []*schema.Column{LedgerEntriesColumns[10], LedgerEntriesColumns[11]},
 			},
 			{
 				Name:    "ledgerentry_card_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LedgerEntriesColumns[12], LedgerEntriesColumns[10]},
+				Columns: []*schema.Column{LedgerEntriesColumns[13], LedgerEntriesColumns[11]},
 			},
 			{
 				Name:    "ledgerentry_store_id_type",
 				Unique:  false,
 				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[2]},
+			},
+			{
+				Name:    "ledgerentry_store_id_card_type_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[3], LedgerEntriesColumns[11]},
+			},
+			{
+				Name:    "ledgerentry_store_id_type_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[2], LedgerEntriesColumns[11]},
 			},
 		},
 	}
@@ -227,6 +238,16 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{LedgerEntryItemsColumns[6]},
 			},
+			{
+				Name:    "ledgerentryitem_product_item_id",
+				Unique:  false,
+				Columns: []*schema.Column{LedgerEntryItemsColumns[2]},
+			},
+			{
+				Name:    "ledgerentryitem_name_snapshot",
+				Unique:  false,
+				Columns: []*schema.Column{LedgerEntryItemsColumns[3]},
+			},
 		},
 	}
 	// MembersColumns holds the columns for the "members" table.
@@ -234,6 +255,8 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "store_id", Type: field.TypeInt64},
 		{Name: "name", Type: field.TypeString, Size: 32},
+		{Name: "name_pinyin", Type: field.TypeString, Size: 128, Default: ""},
+		{Name: "name_initials", Type: field.TypeString, Size: 32, Default: ""},
 		{Name: "phone", Type: field.TypeString, Size: 20},
 		{Name: "source", Type: field.TypeString, Nullable: true, Size: 32},
 		{Name: "created_at", Type: field.TypeTime},
@@ -248,12 +271,22 @@ var (
 			{
 				Name:    "member_store_id_phone",
 				Unique:  true,
-				Columns: []*schema.Column{MembersColumns[1], MembersColumns[3]},
+				Columns: []*schema.Column{MembersColumns[1], MembersColumns[5]},
 			},
 			{
 				Name:    "member_store_id_name",
 				Unique:  false,
 				Columns: []*schema.Column{MembersColumns[1], MembersColumns[2]},
+			},
+			{
+				Name:    "member_store_id_name_pinyin",
+				Unique:  false,
+				Columns: []*schema.Column{MembersColumns[1], MembersColumns[3]},
+			},
+			{
+				Name:    "member_store_id_name_initials",
+				Unique:  false,
+				Columns: []*schema.Column{MembersColumns[1], MembersColumns[4]},
 			},
 		},
 	}
@@ -302,6 +335,14 @@ var (
 				Name:    "membercard_store_id_status",
 				Unique:  false,
 				Columns: []*schema.Column{MemberCardsColumns[1], MemberCardsColumns[9]},
+			},
+			{
+				Name:    "membercard_store_id_member_id_type",
+				Unique:  true,
+				Columns: []*schema.Column{MemberCardsColumns[1], MemberCardsColumns[13], MemberCardsColumns[3]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "type IN ('value', 'count')",
+				},
 			},
 		},
 	}
