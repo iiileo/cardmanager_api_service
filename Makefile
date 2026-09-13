@@ -1,4 +1,4 @@
-.PHONY: run-server dev test test-race generate-ent migrate-ent swagger fmt vet tidy
+.PHONY: run-server dev test test-race generate-ent migrate-ent fmt vet tidy
 
 # Host may be Go 1.27+; pin toolchain to 1.25 for Ent generate compatibility.
 export GOTOOLCHAIN ?= go1.25.0
@@ -20,9 +20,6 @@ generate-ent: ## Generate Ent code from schema
 
 migrate-ent: ## Apply schema via server startup (ent.Schema.Create)
 	@echo "Schema auto-migrates on server start (postgres.NewEntClient)"
-
-swagger: ## Generate swagger docs
-	swag init -g cmd/server/main.go -o docs/swagger
 
 fmt: ## Format Go code
 	gofmt -w .

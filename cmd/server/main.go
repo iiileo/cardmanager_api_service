@@ -12,14 +12,6 @@ import (
 	"go.uber.org/fx"
 )
 
-// @title Card Manager API
-// @version 1.0
-// @description Card Manager API service
-// @BasePath /api/v1
-// @schemes http https
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
 func main() {
 	fx.New(
 		fx.Provide(

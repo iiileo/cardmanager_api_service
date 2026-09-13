@@ -9,7 +9,6 @@ build-errors.log
 
 # Dependencies / generated
 /vendor/
-/docs/swagger/
 
 # Env & IDE
 .env
