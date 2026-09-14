@@ -26,6 +26,7 @@ type AuthService interface {
 	Logout(ctx context.Context, refreshToken string) error
 	Me(ctx context.Context, userID int64) (*dto.UserInfo, error)
 	UpdateMe(ctx context.Context, userID int64, nickname string) (*dto.UserInfo, error)
+	UpdatePhone(ctx context.Context, userID int64, req dto.UpdatePhoneRequest) (*dto.UserInfo, error)
 }
 
 type LoginMeta struct {
@@ -202,6 +203,55 @@ func (s *authService) UpdateMe(ctx context.Context, userID int64, nickname strin
 		return nil, ierr.Internal(err)
 	}
 	return toUserInfo(u), nil
+}
+
+func (s *authService) UpdatePhone(ctx context.Context, userID int64, req dto.UpdatePhoneRequest) (*dto.UserInfo, error) {
+	phone := strings.TrimSpace(req.Phone)
+	code := strings.TrimSpace(req.Code)
+	if !phoneRE.MatchString(phone) {
+		return nil, ierr.Validation("请输入正确的手机号")
+	}
+	if len(code) != 6 {
+		return nil, ierr.Validation("请输入6位验证码")
+	}
+
+	u, err := s.users.GetByID(ctx, userID)
+	if err != nil {
+		return nil, ierr.Internal(err)
+	}
+	if u == nil || u.Status != 1 {
+		return nil, ierr.Unauthorized("")
+	}
+	if u.Phone == phone {
+		return nil, ierr.Validation("新手机号不能与当前相同")
+	}
+
+	record, err := s.sms.FindLatestValid(ctx, phone, "bind_phone")
+	if err != nil {
+		return nil, ierr.Internal(err)
+	}
+	if record == nil || record.CodeHash != auth.HashCode(code) {
+		return nil, ierr.Validation("验证码错误或已过期").WithCode(40001)
+	}
+
+	existing, err := s.users.GetByPhone(ctx, phone)
+	if err != nil {
+		return nil, ierr.Internal(err)
+	}
+	if existing != nil && existing.ID != userID {
+		return nil, ierr.Conflict("该手机号已被使用")
+	}
+
+	if err := s.sms.MarkUsed(ctx, record.ID); err != nil {
+		return nil, ierr.Internal(err)
+	}
+
+	updated, err := s.users.UpdatePhone(ctx, userID, phone)
+	if err != nil {
+		return nil, ierr.Internal(err)
+	}
+	s.log.Info(ctx, "phone updated", "user_id", userID)
+	return toUserInfo(updated), nil
 }
 
 func (s *authService) issueTokens(ctx context.Context, u *domainuser.User, meta LoginMeta) (*dto.TokenResponse, error) {

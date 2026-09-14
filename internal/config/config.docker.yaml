@@ -1,0 +1,27 @@
+# Docker 镜像默认配置（见 Dockerfile 复制为 config.yaml）。
+# 数据库不在 compose 内，请用环境变量 CARDMANAGER_POSTGRES_* 指向外部 PostgreSQL。
+
+server:
+  address: ":8080"
+  mode: local
+
+postgres:
+  # 默认连宿主机 PostgreSQL（需 docker-compose extra_hosts）
+  # Linux 纯 Docker 也可改为局域网 IP，如 192.168.0.2
+  host: host.docker.internal
+  port: 5432
+  user: postgres
+  password: postgres
+  dbname: card_manager
+  sslmode: disable
+
+logging:
+  level: info
+
+auth:
+  jwt_secret: "card-manager-docker-dev-secret-change-me"
+  access_ttl_seconds: 7200
+  refresh_ttl_seconds: 2592000
+  sms_code_ttl_seconds: 300
+  sms_dev_code: "123456"
+  sms_dev_mode: true

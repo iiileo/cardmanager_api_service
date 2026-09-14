@@ -21,7 +21,7 @@ func (h *DashboardHandler) HomeStats(c *gin.Context) {
 	if !ok {
 		return
 	}
-	resp, err := h.service.HomeStats(c.Request.Context(), userID, storeID)
+	resp, err := h.service.HomeStats(c.Request.Context(), userID, storeID, c.Query("month"))
 	if err != nil {
 		response.Fail(c, err)
 		return

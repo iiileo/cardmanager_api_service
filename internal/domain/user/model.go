@@ -35,4 +35,5 @@ type Repository interface {
 	GetByPhone(ctx context.Context, phone string) (*User, error)
 	Create(ctx context.Context, phone, nickname string) (*User, error)
 	UpdateNickname(ctx context.Context, id int64, nickname string) (*User, error)
+	UpdatePhone(ctx context.Context, id int64, phone string) (*User, error)
 }

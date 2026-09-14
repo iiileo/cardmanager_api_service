@@ -1,19 +1,59 @@
-services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: cardmanager
-      POSTGRES_PASSWORD: cardmanager
-      POSTGRES_DB: cardmanager
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cardmanager -d cardmanager"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+# 一键启动：docker compose up -d --build
+# 停止：docker compose down
+#
+# 本文件只启动 API 容器，不包含 PostgreSQL。
+# 请先准备好可访问的数据库，再通过下方环境变量或 .env 配置连接信息。
+#
+# ┌─────────────────────────────────────────────────────────────────┐
+# │ 配置优先级（高 → 低）                                            │
+# │  1. 环境变量 CARDMANAGER_*（见 app.environment 注释）           │
+# │  2. 挂载 config.yaml（取消 app.volumes 注释）                   │
+# │  3. 镜像内 internal/config/config.docker.yaml                   │
+# └─────────────────────────────────────────────────────────────────┘
+#
+# 环境变量命名：前缀 CARDMANAGER_ + 配置路径大写，点改下划线
+#   postgres.host     → CARDMANAGER_POSTGRES_HOST
+#   postgres.password → CARDMANAGER_POSTGRES_PASSWORD
+#   auth.jwt_secret   → CARDMANAGER_AUTH_JWT_SECRET
+# 完整字段见 internal/config/config.go 与 .env.example
 
-volumes:
-  postgres_data:
+name: card-manager
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8080}:8080"
+    # 容器访问宿主机上的 PostgreSQL（Mac/Windows Docker Desktop 默认可用）
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      TZ: Asia/Shanghai
+
+      # --- 数据库（外部 PostgreSQL，按实际环境修改）---
+      # 连宿主机数据库：host.docker.internal
+      # 连局域网数据库：填 IP，如 192.168.0.2
+      # 连云数据库：填域名，sslmode 改为 require
+      CARDMANAGER_POSTGRES_HOST: ${POSTGRES_HOST:-host.docker.internal}
+      CARDMANAGER_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      CARDMANAGER_POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      CARDMANAGER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      CARDMANAGER_POSTGRES_DBNAME: ${POSTGRES_DB:-card_manager}
+      CARDMANAGER_POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-disable}
+
+      # --- 服务 / 日志 ---
+      CARDMANAGER_SERVER_ADDRESS: ":8080"
+      CARDMANAGER_SERVER_MODE: ${SERVER_MODE:-local}
+      CARDMANAGER_LOGGING_LEVEL: ${LOG_LEVEL:-info}
+
+      # --- 认证 / 短信（生产请改 JWT 并关闭 dev 模式）---
+      CARDMANAGER_AUTH_JWT_SECRET: ${JWT_SECRET:-card-manager-docker-dev-secret-change-me}
+      CARDMANAGER_AUTH_SMS_DEV_MODE: ${SMS_DEV_MODE:-true}
+      CARDMANAGER_AUTH_SMS_DEV_CODE: ${SMS_DEV_CODE:-123456}
+
+    # 更习惯改 YAML 时，可挂载本地配置覆盖镜像默认值：
+    # volumes:
+    #   - ./internal/config/config.docker.yaml:/app/internal/config/config.yaml:ro

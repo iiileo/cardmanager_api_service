@@ -29,3 +29,12 @@ vet: ## Vet Go code
 
 tidy: ## Tidy modules
 	go mod tidy
+
+docker-up: ## Build and start app container
+	docker compose up -d --build
+
+docker-down: ## Stop containers
+	docker compose down
+
+docker-logs: ## Tail app logs
+	docker compose logs -f app

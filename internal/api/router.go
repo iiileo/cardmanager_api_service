@@ -31,6 +31,7 @@ func NewRouter(
 	cardHandler *v1.CardHandler,
 	ledgerHandler *v1.LedgerHandler,
 	dashboardHandler *v1.DashboardHandler,
+	notifySettingHandler *v1.NotifySettingHandler,
 	storeSvc service.StoreService,
 ) *Router {
 	if cfg.Server.Mode == "local" {
@@ -61,6 +62,7 @@ func NewRouter(
 			{
 				me.GET("/me", authHandler.Me)
 				me.PATCH("/me", authHandler.UpdateMe)
+				me.PATCH("/me/phone", authHandler.UpdatePhone)
 			}
 		}
 
@@ -146,6 +148,14 @@ func NewRouter(
 					consumes.GET("", ledgerHandler.ListConsumes)
 					consumes.GET("/stats", ledgerHandler.StatsConsumes)
 					consumes.GET("/:id", ledgerHandler.GetConsume)
+				}
+
+				// 通知管理（仅老板）
+				notify := storeScoped.Group("/notify")
+				{
+					notify.GET("/settings", middleware.RequireStoreOwner(), notifySettingHandler.List)
+					notify.GET("/settings/:event", middleware.RequireStoreOwner(), notifySettingHandler.Get)
+					notify.PUT("/settings/:event", middleware.RequireStoreOwner(), notifySettingHandler.Update)
 				}
 			}
 		}

@@ -17,6 +17,7 @@ import (
 	"card_manager/api_service/ent/smscode"
 	"card_manager/api_service/ent/store"
 	"card_manager/api_service/ent/storemember"
+	"card_manager/api_service/ent/storenotifysetting"
 	"card_manager/api_service/ent/user"
 	"context"
 	"errors"
@@ -37,20 +38,21 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeBizType         = "BizType"
-	TypeCardItemBalance = "CardItemBalance"
-	TypeCardProduct     = "CardProduct"
-	TypeCardProductItem = "CardProductItem"
-	TypeLedgerEntry     = "LedgerEntry"
-	TypeLedgerEntryItem = "LedgerEntryItem"
-	TypeMember          = "Member"
-	TypeMemberCard      = "MemberCard"
-	TypeOAuthIdentity   = "OAuthIdentity"
-	TypeRefreshToken    = "RefreshToken"
-	TypeSmsCode         = "SmsCode"
-	TypeStore           = "Store"
-	TypeStoreMember     = "StoreMember"
-	TypeUser            = "User"
+	TypeBizType            = "BizType"
+	TypeCardItemBalance    = "CardItemBalance"
+	TypeCardProduct        = "CardProduct"
+	TypeCardProductItem    = "CardProductItem"
+	TypeLedgerEntry        = "LedgerEntry"
+	TypeLedgerEntryItem    = "LedgerEntryItem"
+	TypeMember             = "Member"
+	TypeMemberCard         = "MemberCard"
+	TypeOAuthIdentity      = "OAuthIdentity"
+	TypeRefreshToken       = "RefreshToken"
+	TypeSmsCode            = "SmsCode"
+	TypeStore              = "Store"
+	TypeStoreMember        = "StoreMember"
+	TypeStoreNotifySetting = "StoreNotifySetting"
+	TypeUser               = "User"
 )
 
 // BizTypeMutation represents an operation that mutates the BizType nodes in the graph.
@@ -12150,6 +12152,752 @@ func (m *StoreMemberMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *StoreMemberMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown StoreMember edge %s", name)
+}
+
+// StoreNotifySettingMutation represents an operation that mutates the StoreNotifySetting nodes in the graph.
+type StoreNotifySettingMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int64
+	store_id      *int64
+	addstore_id   *int64
+	event         *string
+	enabled       *bool
+	notify_boss   *bool
+	wechat        *bool
+	app           *bool
+	created_at    *time.Time
+	updated_at    *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*StoreNotifySetting, error)
+	predicates    []predicate.StoreNotifySetting
+}
+
+var _ ent.Mutation = (*StoreNotifySettingMutation)(nil)
+
+// storenotifysettingOption allows management of the mutation configuration using functional options.
+type storenotifysettingOption func(*StoreNotifySettingMutation)
+
+// newStoreNotifySettingMutation creates new mutation for the StoreNotifySetting entity.
+func newStoreNotifySettingMutation(c config, op Op, opts ...storenotifysettingOption) *StoreNotifySettingMutation {
+	m := &StoreNotifySettingMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeStoreNotifySetting,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withStoreNotifySettingID sets the ID field of the mutation.
+func withStoreNotifySettingID(id int64) storenotifysettingOption {
+	return func(m *StoreNotifySettingMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *StoreNotifySetting
+		)
+		m.oldValue = func(ctx context.Context) (*StoreNotifySetting, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().StoreNotifySetting.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withStoreNotifySetting sets the old StoreNotifySetting of the mutation.
+func withStoreNotifySetting(node *StoreNotifySetting) storenotifysettingOption {
+	return func(m *StoreNotifySettingMutation) {
+		m.oldValue = func(context.Context) (*StoreNotifySetting, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m StoreNotifySettingMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m StoreNotifySettingMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of StoreNotifySetting entities.
+func (m *StoreNotifySettingMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *StoreNotifySettingMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *StoreNotifySettingMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().StoreNotifySetting.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetStoreID sets the "store_id" field.
+func (m *StoreNotifySettingMutation) SetStoreID(i int64) {
+	m.store_id = &i
+	m.addstore_id = nil
+}
+
+// StoreID returns the value of the "store_id" field in the mutation.
+func (m *StoreNotifySettingMutation) StoreID() (r int64, exists bool) {
+	v := m.store_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStoreID returns the old "store_id" field's value of the StoreNotifySetting entity.
+// If the StoreNotifySetting object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StoreNotifySettingMutation) OldStoreID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStoreID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStoreID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStoreID: %w", err)
+	}
+	return oldValue.StoreID, nil
+}
+
+// AddStoreID adds i to the "store_id" field.
+func (m *StoreNotifySettingMutation) AddStoreID(i int64) {
+	if m.addstore_id != nil {
+		*m.addstore_id += i
+	} else {
+		m.addstore_id = &i
+	}
+}
+
+// AddedStoreID returns the value that was added to the "store_id" field in this mutation.
+func (m *StoreNotifySettingMutation) AddedStoreID() (r int64, exists bool) {
+	v := m.addstore_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStoreID resets all changes to the "store_id" field.
+func (m *StoreNotifySettingMutation) ResetStoreID() {
+	m.store_id = nil
+	m.addstore_id = nil
+}
+
+// SetEvent sets the "event" field.
+func (m *StoreNotifySettingMutation) SetEvent(s string) {
+	m.event = &s
+}
+
+// Event returns the value of the "event" field in the mutation.
+func (m *StoreNotifySettingMutation) Event() (r string, exists bool) {
+	v := m.event
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEvent returns the old "event" field's value of the StoreNotifySetting entity.
+// If the StoreNotifySetting object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StoreNotifySettingMutation) OldEvent(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEvent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEvent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEvent: %w", err)
+	}
+	return oldValue.Event, nil
+}
+
+// ResetEvent resets all changes to the "event" field.
+func (m *StoreNotifySettingMutation) ResetEvent() {
+	m.event = nil
+}
+
+// SetEnabled sets the "enabled" field.
+func (m *StoreNotifySettingMutation) SetEnabled(b bool) {
+	m.enabled = &b
+}
+
+// Enabled returns the value of the "enabled" field in the mutation.
+func (m *StoreNotifySettingMutation) Enabled() (r bool, exists bool) {
+	v := m.enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnabled returns the old "enabled" field's value of the StoreNotifySetting entity.
+// If the StoreNotifySetting object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StoreNotifySettingMutation) OldEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnabled: %w", err)
+	}
+	return oldValue.Enabled, nil
+}
+
+// ResetEnabled resets all changes to the "enabled" field.
+func (m *StoreNotifySettingMutation) ResetEnabled() {
+	m.enabled = nil
+}
+
+// SetNotifyBoss sets the "notify_boss" field.
+func (m *StoreNotifySettingMutation) SetNotifyBoss(b bool) {
+	m.notify_boss = &b
+}
+
+// NotifyBoss returns the value of the "notify_boss" field in the mutation.
+func (m *StoreNotifySettingMutation) NotifyBoss() (r bool, exists bool) {
+	v := m.notify_boss
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNotifyBoss returns the old "notify_boss" field's value of the StoreNotifySetting entity.
+// If the StoreNotifySetting object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StoreNotifySettingMutation) OldNotifyBoss(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNotifyBoss is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNotifyBoss requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNotifyBoss: %w", err)
+	}
+	return oldValue.NotifyBoss, nil
+}
+
+// ResetNotifyBoss resets all changes to the "notify_boss" field.
+func (m *StoreNotifySettingMutation) ResetNotifyBoss() {
+	m.notify_boss = nil
+}
+
+// SetWechat sets the "wechat" field.
+func (m *StoreNotifySettingMutation) SetWechat(b bool) {
+	m.wechat = &b
+}
+
+// Wechat returns the value of the "wechat" field in the mutation.
+func (m *StoreNotifySettingMutation) Wechat() (r bool, exists bool) {
+	v := m.wechat
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWechat returns the old "wechat" field's value of the StoreNotifySetting entity.
+// If the StoreNotifySetting object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StoreNotifySettingMutation) OldWechat(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWechat is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWechat requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWechat: %w", err)
+	}
+	return oldValue.Wechat, nil
+}
+
+// ResetWechat resets all changes to the "wechat" field.
+func (m *StoreNotifySettingMutation) ResetWechat() {
+	m.wechat = nil
+}
+
+// SetApp sets the "app" field.
+func (m *StoreNotifySettingMutation) SetApp(b bool) {
+	m.app = &b
+}
+
+// App returns the value of the "app" field in the mutation.
+func (m *StoreNotifySettingMutation) App() (r bool, exists bool) {
+	v := m.app
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldApp returns the old "app" field's value of the StoreNotifySetting entity.
+// If the StoreNotifySetting object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StoreNotifySettingMutation) OldApp(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldApp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldApp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldApp: %w", err)
+	}
+	return oldValue.App, nil
+}
+
+// ResetApp resets all changes to the "app" field.
+func (m *StoreNotifySettingMutation) ResetApp() {
+	m.app = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *StoreNotifySettingMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *StoreNotifySettingMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the StoreNotifySetting entity.
+// If the StoreNotifySetting object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StoreNotifySettingMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *StoreNotifySettingMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *StoreNotifySettingMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *StoreNotifySettingMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the StoreNotifySetting entity.
+// If the StoreNotifySetting object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *StoreNotifySettingMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *StoreNotifySettingMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the StoreNotifySettingMutation builder.
+func (m *StoreNotifySettingMutation) Where(ps ...predicate.StoreNotifySetting) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the StoreNotifySettingMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *StoreNotifySettingMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.StoreNotifySetting, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *StoreNotifySettingMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *StoreNotifySettingMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (StoreNotifySetting).
+func (m *StoreNotifySettingMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *StoreNotifySettingMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.store_id != nil {
+		fields = append(fields, storenotifysetting.FieldStoreID)
+	}
+	if m.event != nil {
+		fields = append(fields, storenotifysetting.FieldEvent)
+	}
+	if m.enabled != nil {
+		fields = append(fields, storenotifysetting.FieldEnabled)
+	}
+	if m.notify_boss != nil {
+		fields = append(fields, storenotifysetting.FieldNotifyBoss)
+	}
+	if m.wechat != nil {
+		fields = append(fields, storenotifysetting.FieldWechat)
+	}
+	if m.app != nil {
+		fields = append(fields, storenotifysetting.FieldApp)
+	}
+	if m.created_at != nil {
+		fields = append(fields, storenotifysetting.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, storenotifysetting.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *StoreNotifySettingMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case storenotifysetting.FieldStoreID:
+		return m.StoreID()
+	case storenotifysetting.FieldEvent:
+		return m.Event()
+	case storenotifysetting.FieldEnabled:
+		return m.Enabled()
+	case storenotifysetting.FieldNotifyBoss:
+		return m.NotifyBoss()
+	case storenotifysetting.FieldWechat:
+		return m.Wechat()
+	case storenotifysetting.FieldApp:
+		return m.App()
+	case storenotifysetting.FieldCreatedAt:
+		return m.CreatedAt()
+	case storenotifysetting.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *StoreNotifySettingMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case storenotifysetting.FieldStoreID:
+		return m.OldStoreID(ctx)
+	case storenotifysetting.FieldEvent:
+		return m.OldEvent(ctx)
+	case storenotifysetting.FieldEnabled:
+		return m.OldEnabled(ctx)
+	case storenotifysetting.FieldNotifyBoss:
+		return m.OldNotifyBoss(ctx)
+	case storenotifysetting.FieldWechat:
+		return m.OldWechat(ctx)
+	case storenotifysetting.FieldApp:
+		return m.OldApp(ctx)
+	case storenotifysetting.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case storenotifysetting.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown StoreNotifySetting field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *StoreNotifySettingMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case storenotifysetting.FieldStoreID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStoreID(v)
+		return nil
+	case storenotifysetting.FieldEvent:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEvent(v)
+		return nil
+	case storenotifysetting.FieldEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnabled(v)
+		return nil
+	case storenotifysetting.FieldNotifyBoss:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNotifyBoss(v)
+		return nil
+	case storenotifysetting.FieldWechat:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWechat(v)
+		return nil
+	case storenotifysetting.FieldApp:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetApp(v)
+		return nil
+	case storenotifysetting.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case storenotifysetting.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown StoreNotifySetting field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *StoreNotifySettingMutation) AddedFields() []string {
+	var fields []string
+	if m.addstore_id != nil {
+		fields = append(fields, storenotifysetting.FieldStoreID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *StoreNotifySettingMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case storenotifysetting.FieldStoreID:
+		return m.AddedStoreID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *StoreNotifySettingMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case storenotifysetting.FieldStoreID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStoreID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown StoreNotifySetting numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *StoreNotifySettingMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *StoreNotifySettingMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *StoreNotifySettingMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown StoreNotifySetting nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *StoreNotifySettingMutation) ResetField(name string) error {
+	switch name {
+	case storenotifysetting.FieldStoreID:
+		m.ResetStoreID()
+		return nil
+	case storenotifysetting.FieldEvent:
+		m.ResetEvent()
+		return nil
+	case storenotifysetting.FieldEnabled:
+		m.ResetEnabled()
+		return nil
+	case storenotifysetting.FieldNotifyBoss:
+		m.ResetNotifyBoss()
+		return nil
+	case storenotifysetting.FieldWechat:
+		m.ResetWechat()
+		return nil
+	case storenotifysetting.FieldApp:
+		m.ResetApp()
+		return nil
+	case storenotifysetting.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case storenotifysetting.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown StoreNotifySetting field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *StoreNotifySettingMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *StoreNotifySettingMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *StoreNotifySettingMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *StoreNotifySettingMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *StoreNotifySettingMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *StoreNotifySettingMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *StoreNotifySettingMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown StoreNotifySetting unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *StoreNotifySettingMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown StoreNotifySetting edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.

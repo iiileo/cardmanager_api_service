@@ -45,5 +45,8 @@ type Store func(*sql.Selector)
 // StoreMember is the predicate function for storemember builders.
 type StoreMember func(*sql.Selector)
 
+// StoreNotifySetting is the predicate function for storenotifysetting builders.
+type StoreNotifySetting func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

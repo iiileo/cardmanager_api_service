@@ -515,6 +515,31 @@ var (
 			},
 		},
 	}
+	// StoreNotifySettingsColumns holds the columns for the "store_notify_settings" table.
+	StoreNotifySettingsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "store_id", Type: field.TypeInt64},
+		{Name: "event", Type: field.TypeString, Size: 16},
+		{Name: "enabled", Type: field.TypeBool, Default: true},
+		{Name: "notify_boss", Type: field.TypeBool, Default: true},
+		{Name: "wechat", Type: field.TypeBool, Default: true},
+		{Name: "app", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// StoreNotifySettingsTable holds the schema information for the "store_notify_settings" table.
+	StoreNotifySettingsTable = &schema.Table{
+		Name:       "store_notify_settings",
+		Columns:    StoreNotifySettingsColumns,
+		PrimaryKey: []*schema.Column{StoreNotifySettingsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "storenotifysetting_store_id_event",
+				Unique:  true,
+				Columns: []*schema.Column{StoreNotifySettingsColumns[1], StoreNotifySettingsColumns[2]},
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -552,6 +577,7 @@ var (
 		SmsCodesTable,
 		StoresTable,
 		StoreMembersTable,
+		StoreNotifySettingsTable,
 		UsersTable,
 	}
 )
@@ -601,6 +627,9 @@ func init() {
 	}
 	StoreMembersTable.Annotation = &entsql.Annotation{
 		Table: "store_members",
+	}
+	StoreNotifySettingsTable.Annotation = &entsql.Annotation{
+		Table: "store_notify_settings",
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",

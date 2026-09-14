@@ -1,0 +1,12 @@
+.git
+.gitignore
+.air.toml
+tmp
+bin
+dist
+coverage.out
+coverage.html
+postman
+yaak
+*.md
+!internal/config/*.yaml

@@ -1,0 +1,22 @@
+---
+description: 修改 HTTP 接口时同步更新 Yaak 文档与请求
+globs: api_service/internal/api/**,api_service/internal/service/**,api_service/ent/schema/**,api_service/internal/api/router.go
+alwaysApply: false
+---
+
+# Yaak 接口文档同步
+
+在 `api_service` 中**新增、修改或删除 HTTP 接口**时，必须同步更新 Yaak，不得只改代码：
+
+1. **`yaak/README.md`**：补充分组说明、路径、请求/响应字段、联调步骤
+2. **Yaak 工作区「卡管家」**：新增或更新对应 HTTP 请求（含 Bearer、`X-Store-Id`、示例 Body）
+3. **环境变量**：若新接口产生可链式引用的 ID/Token，在 Local 环境变量表补充说明
+
+## 检查清单
+
+- [ ] 路由与 handler 变更已在 README 体现
+- [ ] Yaak 中存在可一键调用的请求（命名与 README 分组一致）
+- [ ] 权限差异已注明（如仅老板、需 `X-Store-Id`）
+- [ ] 破坏性变更（字段重命名/删除）在 README 简要说明
+
+Yaak 变量语法：`${[ access_token ]}`；链式取值：`${[ response.body.path(request='请求ID', path='$.data.xxx') ]}`

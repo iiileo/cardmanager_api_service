@@ -22,6 +22,11 @@ type UpdateMeRequest struct {
 	Nickname string `json:"nickname" binding:"required"`
 }
 
+type UpdatePhoneRequest struct {
+	Phone string `json:"phone" binding:"required"`
+	Code  string `json:"code" binding:"required"`
+}
+
 type UserInfo struct {
 	ID       string `json:"id"`
 	Phone    string `json:"phone"`

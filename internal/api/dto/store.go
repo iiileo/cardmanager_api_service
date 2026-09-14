@@ -76,7 +76,8 @@ type StaffItem struct {
 	UserID      string  `json:"user_id"`
 	Role        string  `json:"role"`
 	Status      string  `json:"status"`
-	DisplayName *string `json:"display_name,omitempty"`
+	Nickname    string  `json:"nickname"`
+	DisplayName *string `json:"display_name,omitempty"` // 门店内称呼；无则回退 nickname
 	JoinedAt    *string `json:"joined_at,omitempty"`
 }
 

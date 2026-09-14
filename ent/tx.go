@@ -38,6 +38,8 @@ type Tx struct {
 	Store *StoreClient
 	// StoreMember is the client for interacting with the StoreMember builders.
 	StoreMember *StoreMemberClient
+	// StoreNotifySetting is the client for interacting with the StoreNotifySetting builders.
+	StoreNotifySetting *StoreNotifySettingClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -184,6 +186,7 @@ func (tx *Tx) init() {
 	tx.SmsCode = NewSmsCodeClient(tx.config)
 	tx.Store = NewStoreClient(tx.config)
 	tx.StoreMember = NewStoreMemberClient(tx.config)
+	tx.StoreNotifySetting = NewStoreNotifySettingClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

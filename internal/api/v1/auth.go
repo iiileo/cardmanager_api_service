@@ -108,6 +108,25 @@ func (h *AuthHandler) UpdateMe(c *gin.Context) {
 	response.OK(c, resp)
 }
 
+func (h *AuthHandler) UpdatePhone(c *gin.Context) {
+	userID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, ierr.Unauthorized(""))
+		return
+	}
+	var req dto.UpdatePhoneRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, ierr.Validation(ierr.MsgBadRequest))
+		return
+	}
+	resp, err := h.service.UpdatePhone(c.Request.Context(), userID, req)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
 func loginMeta(c *gin.Context) service.LoginMeta {
 	return service.LoginMeta{
 		IP:        c.ClientIP(),

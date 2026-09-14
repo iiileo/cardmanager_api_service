@@ -24,6 +24,7 @@ import (
 	"card_manager/api_service/ent/smscode"
 	"card_manager/api_service/ent/store"
 	"card_manager/api_service/ent/storemember"
+	"card_manager/api_service/ent/storenotifysetting"
 	"card_manager/api_service/ent/user"
 
 	"entgo.io/ent"
@@ -63,6 +64,8 @@ type Client struct {
 	Store *StoreClient
 	// StoreMember is the client for interacting with the StoreMember builders.
 	StoreMember *StoreMemberClient
+	// StoreNotifySetting is the client for interacting with the StoreNotifySetting builders.
+	StoreNotifySetting *StoreNotifySettingClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -89,6 +92,7 @@ func (c *Client) init() {
 	c.SmsCode = NewSmsCodeClient(c.config)
 	c.Store = NewStoreClient(c.config)
 	c.StoreMember = NewStoreMemberClient(c.config)
+	c.StoreNotifySetting = NewStoreNotifySettingClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -180,22 +184,23 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:             ctx,
-		config:          cfg,
-		BizType:         NewBizTypeClient(cfg),
-		CardItemBalance: NewCardItemBalanceClient(cfg),
-		CardProduct:     NewCardProductClient(cfg),
-		CardProductItem: NewCardProductItemClient(cfg),
-		LedgerEntry:     NewLedgerEntryClient(cfg),
-		LedgerEntryItem: NewLedgerEntryItemClient(cfg),
-		Member:          NewMemberClient(cfg),
-		MemberCard:      NewMemberCardClient(cfg),
-		OAuthIdentity:   NewOAuthIdentityClient(cfg),
-		RefreshToken:    NewRefreshTokenClient(cfg),
-		SmsCode:         NewSmsCodeClient(cfg),
-		Store:           NewStoreClient(cfg),
-		StoreMember:     NewStoreMemberClient(cfg),
-		User:            NewUserClient(cfg),
+		ctx:                ctx,
+		config:             cfg,
+		BizType:            NewBizTypeClient(cfg),
+		CardItemBalance:    NewCardItemBalanceClient(cfg),
+		CardProduct:        NewCardProductClient(cfg),
+		CardProductItem:    NewCardProductItemClient(cfg),
+		LedgerEntry:        NewLedgerEntryClient(cfg),
+		LedgerEntryItem:    NewLedgerEntryItemClient(cfg),
+		Member:             NewMemberClient(cfg),
+		MemberCard:         NewMemberCardClient(cfg),
+		OAuthIdentity:      NewOAuthIdentityClient(cfg),
+		RefreshToken:       NewRefreshTokenClient(cfg),
+		SmsCode:            NewSmsCodeClient(cfg),
+		Store:              NewStoreClient(cfg),
+		StoreMember:        NewStoreMemberClient(cfg),
+		StoreNotifySetting: NewStoreNotifySettingClient(cfg),
+		User:               NewUserClient(cfg),
 	}, nil
 }
 
@@ -213,22 +218,23 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:             ctx,
-		config:          cfg,
-		BizType:         NewBizTypeClient(cfg),
-		CardItemBalance: NewCardItemBalanceClient(cfg),
-		CardProduct:     NewCardProductClient(cfg),
-		CardProductItem: NewCardProductItemClient(cfg),
-		LedgerEntry:     NewLedgerEntryClient(cfg),
-		LedgerEntryItem: NewLedgerEntryItemClient(cfg),
-		Member:          NewMemberClient(cfg),
-		MemberCard:      NewMemberCardClient(cfg),
-		OAuthIdentity:   NewOAuthIdentityClient(cfg),
-		RefreshToken:    NewRefreshTokenClient(cfg),
-		SmsCode:         NewSmsCodeClient(cfg),
-		Store:           NewStoreClient(cfg),
-		StoreMember:     NewStoreMemberClient(cfg),
-		User:            NewUserClient(cfg),
+		ctx:                ctx,
+		config:             cfg,
+		BizType:            NewBizTypeClient(cfg),
+		CardItemBalance:    NewCardItemBalanceClient(cfg),
+		CardProduct:        NewCardProductClient(cfg),
+		CardProductItem:    NewCardProductItemClient(cfg),
+		LedgerEntry:        NewLedgerEntryClient(cfg),
+		LedgerEntryItem:    NewLedgerEntryItemClient(cfg),
+		Member:             NewMemberClient(cfg),
+		MemberCard:         NewMemberCardClient(cfg),
+		OAuthIdentity:      NewOAuthIdentityClient(cfg),
+		RefreshToken:       NewRefreshTokenClient(cfg),
+		SmsCode:            NewSmsCodeClient(cfg),
+		Store:              NewStoreClient(cfg),
+		StoreMember:        NewStoreMemberClient(cfg),
+		StoreNotifySetting: NewStoreNotifySettingClient(cfg),
+		User:               NewUserClient(cfg),
 	}, nil
 }
 
@@ -260,7 +266,7 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.BizType, c.CardItemBalance, c.CardProduct, c.CardProductItem, c.LedgerEntry,
 		c.LedgerEntryItem, c.Member, c.MemberCard, c.OAuthIdentity, c.RefreshToken,
-		c.SmsCode, c.Store, c.StoreMember, c.User,
+		c.SmsCode, c.Store, c.StoreMember, c.StoreNotifySetting, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -272,7 +278,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.BizType, c.CardItemBalance, c.CardProduct, c.CardProductItem, c.LedgerEntry,
 		c.LedgerEntryItem, c.Member, c.MemberCard, c.OAuthIdentity, c.RefreshToken,
-		c.SmsCode, c.Store, c.StoreMember, c.User,
+		c.SmsCode, c.Store, c.StoreMember, c.StoreNotifySetting, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -307,6 +313,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Store.mutate(ctx, m)
 	case *StoreMemberMutation:
 		return c.StoreMember.mutate(ctx, m)
+	case *StoreNotifySettingMutation:
+		return c.StoreNotifySetting.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -2235,6 +2243,139 @@ func (c *StoreMemberClient) mutate(ctx context.Context, m *StoreMemberMutation) 
 	}
 }
 
+// StoreNotifySettingClient is a client for the StoreNotifySetting schema.
+type StoreNotifySettingClient struct {
+	config
+}
+
+// NewStoreNotifySettingClient returns a client for the StoreNotifySetting from the given config.
+func NewStoreNotifySettingClient(c config) *StoreNotifySettingClient {
+	return &StoreNotifySettingClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `storenotifysetting.Hooks(f(g(h())))`.
+func (c *StoreNotifySettingClient) Use(hooks ...Hook) {
+	c.hooks.StoreNotifySetting = append(c.hooks.StoreNotifySetting, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `storenotifysetting.Intercept(f(g(h())))`.
+func (c *StoreNotifySettingClient) Intercept(interceptors ...Interceptor) {
+	c.inters.StoreNotifySetting = append(c.inters.StoreNotifySetting, interceptors...)
+}
+
+// Create returns a builder for creating a StoreNotifySetting entity.
+func (c *StoreNotifySettingClient) Create() *StoreNotifySettingCreate {
+	mutation := newStoreNotifySettingMutation(c.config, OpCreate)
+	return &StoreNotifySettingCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of StoreNotifySetting entities.
+func (c *StoreNotifySettingClient) CreateBulk(builders ...*StoreNotifySettingCreate) *StoreNotifySettingCreateBulk {
+	return &StoreNotifySettingCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *StoreNotifySettingClient) MapCreateBulk(slice any, setFunc func(*StoreNotifySettingCreate, int)) *StoreNotifySettingCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &StoreNotifySettingCreateBulk{err: fmt.Errorf("calling to StoreNotifySettingClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*StoreNotifySettingCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &StoreNotifySettingCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for StoreNotifySetting.
+func (c *StoreNotifySettingClient) Update() *StoreNotifySettingUpdate {
+	mutation := newStoreNotifySettingMutation(c.config, OpUpdate)
+	return &StoreNotifySettingUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *StoreNotifySettingClient) UpdateOne(_m *StoreNotifySetting) *StoreNotifySettingUpdateOne {
+	mutation := newStoreNotifySettingMutation(c.config, OpUpdateOne, withStoreNotifySetting(_m))
+	return &StoreNotifySettingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *StoreNotifySettingClient) UpdateOneID(id int64) *StoreNotifySettingUpdateOne {
+	mutation := newStoreNotifySettingMutation(c.config, OpUpdateOne, withStoreNotifySettingID(id))
+	return &StoreNotifySettingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for StoreNotifySetting.
+func (c *StoreNotifySettingClient) Delete() *StoreNotifySettingDelete {
+	mutation := newStoreNotifySettingMutation(c.config, OpDelete)
+	return &StoreNotifySettingDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *StoreNotifySettingClient) DeleteOne(_m *StoreNotifySetting) *StoreNotifySettingDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *StoreNotifySettingClient) DeleteOneID(id int64) *StoreNotifySettingDeleteOne {
+	builder := c.Delete().Where(storenotifysetting.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &StoreNotifySettingDeleteOne{builder}
+}
+
+// Query returns a query builder for StoreNotifySetting.
+func (c *StoreNotifySettingClient) Query() *StoreNotifySettingQuery {
+	return &StoreNotifySettingQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeStoreNotifySetting},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a StoreNotifySetting entity by its id.
+func (c *StoreNotifySettingClient) Get(ctx context.Context, id int64) (*StoreNotifySetting, error) {
+	return c.Query().Where(storenotifysetting.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *StoreNotifySettingClient) GetX(ctx context.Context, id int64) *StoreNotifySetting {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *StoreNotifySettingClient) Hooks() []Hook {
+	return c.hooks.StoreNotifySetting
+}
+
+// Interceptors returns the client interceptors.
+func (c *StoreNotifySettingClient) Interceptors() []Interceptor {
+	return c.inters.StoreNotifySetting
+}
+
+func (c *StoreNotifySettingClient) mutate(ctx context.Context, m *StoreNotifySettingMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&StoreNotifySettingCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&StoreNotifySettingUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&StoreNotifySettingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&StoreNotifySettingDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown StoreNotifySetting mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -2373,11 +2514,11 @@ type (
 	hooks struct {
 		BizType, CardItemBalance, CardProduct, CardProductItem, LedgerEntry,
 		LedgerEntryItem, Member, MemberCard, OAuthIdentity, RefreshToken, SmsCode,
-		Store, StoreMember, User []ent.Hook
+		Store, StoreMember, StoreNotifySetting, User []ent.Hook
 	}
 	inters struct {
 		BizType, CardItemBalance, CardProduct, CardProductItem, LedgerEntry,
 		LedgerEntryItem, Member, MemberCard, OAuthIdentity, RefreshToken, SmsCode,
-		Store, StoreMember, User []ent.Interceptor
+		Store, StoreMember, StoreNotifySetting, User []ent.Interceptor
 	}
 )

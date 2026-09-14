@@ -32,6 +32,7 @@ func main() {
 			repository.NewLedgerRepository,
 			repository.NewCardTxnRepository,
 			repository.NewDashboardRepository,
+			repository.NewNotifySettingRepository,
 
 			service.NewAuthService,
 			service.NewBizTypeService,
@@ -41,6 +42,7 @@ func main() {
 			service.NewCardService,
 			service.NewLedgerService,
 			service.NewDashboardService,
+			service.NewNotifySettingService,
 
 			v1.NewHealthHandler,
 			v1.NewAuthHandler,
@@ -51,6 +53,7 @@ func main() {
 			v1.NewCardHandler,
 			v1.NewLedgerHandler,
 			v1.NewDashboardHandler,
+			v1.NewNotifySettingHandler,
 			api.NewRouter,
 		),
 		fx.Invoke(postgres.SeedDefaults),

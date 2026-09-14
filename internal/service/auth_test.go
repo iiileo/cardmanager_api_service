@@ -37,6 +37,13 @@ func (m *memUserRepo) UpdateNickname(_ context.Context, id int64, nickname strin
 	u.Nickname = nickname
 	return u, nil
 }
+func (m *memUserRepo) UpdatePhone(_ context.Context, id int64, phone string) (*domainuser.User, error) {
+	u := m.byID[id]
+	delete(m.byPhone, u.Phone)
+	u.Phone = phone
+	m.byPhone[phone] = u
+	return u, nil
+}
 
 type memSMSRepo struct {
 	items []*domainsms.SmsCode
@@ -116,5 +123,74 @@ func TestAuthService_LoginSMS(t *testing.T) {
 	}
 	if tok.AccessToken == "" || tok.RefreshToken == "" || tok.User == nil {
 		t.Fatalf("incomplete token response: %+v", tok)
+	}
+}
+
+func TestAuthService_UpdatePhone(t *testing.T) {
+	cfg := &config.Config{Auth: config.AuthConfig{
+		JWTSecret:         "test",
+		AccessTTLSeconds:  7200,
+		RefreshTTLSeconds: 2592000,
+		SmsCodeTTLSeconds: 300,
+		SmsDevCode:        "123456",
+		SmsDevMode:        true,
+	}}
+	log := logger.NewLogger(&config.Config{Logging: config.LoggingConfig{Level: "error"}})
+	users := &memUserRepo{byPhone: map[string]*domainuser.User{}, byID: map[int64]*domainuser.User{}}
+	sms := &memSMSRepo{}
+	rt := &memRTRepo{byHash: map[string]*domainrt.RefreshToken{}}
+	svc := NewAuthService(users, rt, sms, auth.NewTokenManager(cfg), cfg, log)
+
+	users.byPhone["13800138000"] = &domainuser.User{ID: 1, Phone: "13800138000", Nickname: "店长", Status: 1}
+	users.byID[1] = users.byPhone["13800138000"]
+
+	if _, err := svc.SendSMS(context.Background(), dto.SendSMSRequest{
+		Phone: "13900139000", Scene: "bind_phone",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	user, err := svc.UpdatePhone(context.Background(), 1, dto.UpdatePhoneRequest{
+		Phone: "13900139000", Code: "123456",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if user.Phone != "139****9000" {
+		t.Fatalf("unexpected masked phone: %s", user.Phone)
+	}
+	if users.byID[1].Phone != "13900139000" {
+		t.Fatalf("phone not updated in repo: %s", users.byID[1].Phone)
+	}
+}
+
+func TestAuthService_UpdatePhone_Conflict(t *testing.T) {
+	cfg := &config.Config{Auth: config.AuthConfig{
+		SmsDevCode: "123456", SmsDevMode: true, SmsCodeTTLSeconds: 300,
+		JWTSecret: "test", AccessTTLSeconds: 7200, RefreshTTLSeconds: 2592000,
+	}}
+	log := logger.NewLogger(&config.Config{Logging: config.LoggingConfig{Level: "error"}})
+	users := &memUserRepo{
+		byPhone: map[string]*domainuser.User{
+			"13800138000": {ID: 1, Phone: "13800138000", Status: 1},
+			"13900139000": {ID: 2, Phone: "13900139000", Status: 1},
+		},
+		byID: map[int64]*domainuser.User{
+			1: {ID: 1, Phone: "13800138000", Status: 1},
+			2: {ID: 2, Phone: "13900139000", Status: 1},
+		},
+	}
+	sms := &memSMSRepo{}
+	svc := NewAuthService(users, &memRTRepo{byHash: map[string]*domainrt.RefreshToken{}}, sms, auth.NewTokenManager(cfg), cfg, log)
+
+	if _, err := svc.SendSMS(context.Background(), dto.SendSMSRequest{
+		Phone: "13900139000", Scene: "bind_phone",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.UpdatePhone(context.Background(), 1, dto.UpdatePhoneRequest{
+		Phone: "13900139000", Code: "123456",
+	}); err == nil {
+		t.Fatal("expected conflict")
 	}
 }

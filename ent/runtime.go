@@ -17,6 +17,7 @@ import (
 	"card_manager/api_service/ent/smscode"
 	"card_manager/api_service/ent/store"
 	"card_manager/api_service/ent/storemember"
+	"card_manager/api_service/ent/storenotifysetting"
 	"card_manager/api_service/ent/user"
 	"time"
 )
@@ -711,6 +712,52 @@ func init() {
 	storemember.DefaultUpdatedAt = storememberDescUpdatedAt.Default.(func() time.Time)
 	// storemember.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	storemember.UpdateDefaultUpdatedAt = storememberDescUpdatedAt.UpdateDefault.(func() time.Time)
+	storenotifysettingFields := schema.StoreNotifySetting{}.Fields()
+	_ = storenotifysettingFields
+	// storenotifysettingDescEvent is the schema descriptor for event field.
+	storenotifysettingDescEvent := storenotifysettingFields[2].Descriptor()
+	// storenotifysetting.EventValidator is a validator for the "event" field. It is called by the builders before save.
+	storenotifysetting.EventValidator = func() func(string) error {
+		validators := storenotifysettingDescEvent.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(event string) error {
+			for _, fn := range fns {
+				if err := fn(event); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// storenotifysettingDescEnabled is the schema descriptor for enabled field.
+	storenotifysettingDescEnabled := storenotifysettingFields[3].Descriptor()
+	// storenotifysetting.DefaultEnabled holds the default value on creation for the enabled field.
+	storenotifysetting.DefaultEnabled = storenotifysettingDescEnabled.Default.(bool)
+	// storenotifysettingDescNotifyBoss is the schema descriptor for notify_boss field.
+	storenotifysettingDescNotifyBoss := storenotifysettingFields[4].Descriptor()
+	// storenotifysetting.DefaultNotifyBoss holds the default value on creation for the notify_boss field.
+	storenotifysetting.DefaultNotifyBoss = storenotifysettingDescNotifyBoss.Default.(bool)
+	// storenotifysettingDescWechat is the schema descriptor for wechat field.
+	storenotifysettingDescWechat := storenotifysettingFields[5].Descriptor()
+	// storenotifysetting.DefaultWechat holds the default value on creation for the wechat field.
+	storenotifysetting.DefaultWechat = storenotifysettingDescWechat.Default.(bool)
+	// storenotifysettingDescApp is the schema descriptor for app field.
+	storenotifysettingDescApp := storenotifysettingFields[6].Descriptor()
+	// storenotifysetting.DefaultApp holds the default value on creation for the app field.
+	storenotifysetting.DefaultApp = storenotifysettingDescApp.Default.(bool)
+	// storenotifysettingDescCreatedAt is the schema descriptor for created_at field.
+	storenotifysettingDescCreatedAt := storenotifysettingFields[7].Descriptor()
+	// storenotifysetting.DefaultCreatedAt holds the default value on creation for the created_at field.
+	storenotifysetting.DefaultCreatedAt = storenotifysettingDescCreatedAt.Default.(func() time.Time)
+	// storenotifysettingDescUpdatedAt is the schema descriptor for updated_at field.
+	storenotifysettingDescUpdatedAt := storenotifysettingFields[8].Descriptor()
+	// storenotifysetting.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	storenotifysetting.DefaultUpdatedAt = storenotifysettingDescUpdatedAt.Default.(func() time.Time)
+	// storenotifysetting.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	storenotifysetting.UpdateDefaultUpdatedAt = storenotifysettingDescUpdatedAt.UpdateDefault.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescPhone is the schema descriptor for phone field.

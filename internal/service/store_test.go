@@ -10,6 +10,7 @@ import (
 	"card_manager/api_service/internal/config"
 	domainstore "card_manager/api_service/internal/domain/store"
 	domainmember "card_manager/api_service/internal/domain/storemember"
+	domainuser "card_manager/api_service/internal/domain/user"
 	"card_manager/api_service/internal/logger"
 )
 
@@ -174,8 +175,14 @@ func TestStoreService_CreateAndJoin(t *testing.T) {
 	stores := &memStoreRepo{
 		byID: map[int64]*domainstore.Store{}, byCode: map[string]*domainstore.Store{}, members: members,
 	}
+	users := &memUserRepo{
+		byID: map[int64]*domainuser.User{
+			1: {ID: 1, Nickname: "老板A", Status: 1},
+			2: {ID: 2, Nickname: "账号B", Status: 1},
+		},
+	}
 	biz := &memBizTypeSvc{codes: map[string]string{"tea": "茶饮", "beauty": "美业", "retail": "零售"}}
-	svc := NewStoreService(stores, members, biz, log)
+	svc := NewStoreService(stores, members, users, biz, log)
 
 	created, err := svc.Create(context.Background(), 1, dto.CreateStoreRequest{
 		Name: "阳光茶饮", City: "杭州", OpenTime: "10:00", CloseTime: "22:00",
@@ -236,5 +243,28 @@ func TestStoreService_CreateAndJoin(t *testing.T) {
 	}
 	if len(staff.List) != 2 {
 		t.Fatalf("want 2 staff, got %d", len(staff.List))
+	}
+	for _, item := range staff.List {
+		if item.Nickname == "" {
+			t.Fatalf("staff nickname required: %+v", item)
+		}
+		if item.DisplayName == nil || *item.DisplayName == "" {
+			t.Fatalf("staff display_name required: %+v", item)
+		}
+	}
+	byRole := map[string]*dto.StaffItem{}
+	for _, item := range staff.List {
+		byRole[item.Role] = item
+	}
+	owner := byRole[domainstore.RoleOwner]
+	staffMember := byRole[domainstore.RoleStaff]
+	if owner == nil || staffMember == nil {
+		t.Fatalf("unexpected staff roles: %+v", staff.List)
+	}
+	if owner.Nickname != "老板A" || *owner.DisplayName != "老板A" {
+		t.Fatalf("owner should fallback to nickname: %+v", owner)
+	}
+	if staffMember.Nickname != "账号B" || *staffMember.DisplayName != "小周" {
+		t.Fatalf("staff should keep store display_name: %+v", staffMember)
 	}
 }

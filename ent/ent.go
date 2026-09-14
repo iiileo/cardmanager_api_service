@@ -16,6 +16,7 @@ import (
 	"card_manager/api_service/ent/smscode"
 	"card_manager/api_service/ent/store"
 	"card_manager/api_service/ent/storemember"
+	"card_manager/api_service/ent/storenotifysetting"
 	"card_manager/api_service/ent/user"
 	"context"
 	"errors"
@@ -86,20 +87,21 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			biztype.Table:         biztype.ValidColumn,
-			carditembalance.Table: carditembalance.ValidColumn,
-			cardproduct.Table:     cardproduct.ValidColumn,
-			cardproductitem.Table: cardproductitem.ValidColumn,
-			ledgerentry.Table:     ledgerentry.ValidColumn,
-			ledgerentryitem.Table: ledgerentryitem.ValidColumn,
-			member.Table:          member.ValidColumn,
-			membercard.Table:      membercard.ValidColumn,
-			oauthidentity.Table:   oauthidentity.ValidColumn,
-			refreshtoken.Table:    refreshtoken.ValidColumn,
-			smscode.Table:         smscode.ValidColumn,
-			store.Table:           store.ValidColumn,
-			storemember.Table:     storemember.ValidColumn,
-			user.Table:            user.ValidColumn,
+			biztype.Table:            biztype.ValidColumn,
+			carditembalance.Table:    carditembalance.ValidColumn,
+			cardproduct.Table:        cardproduct.ValidColumn,
+			cardproductitem.Table:    cardproductitem.ValidColumn,
+			ledgerentry.Table:        ledgerentry.ValidColumn,
+			ledgerentryitem.Table:    ledgerentryitem.ValidColumn,
+			member.Table:             member.ValidColumn,
+			membercard.Table:         membercard.ValidColumn,
+			oauthidentity.Table:      oauthidentity.ValidColumn,
+			refreshtoken.Table:       refreshtoken.ValidColumn,
+			smscode.Table:            smscode.ValidColumn,
+			store.Table:              store.ValidColumn,
+			storemember.Table:        storemember.ValidColumn,
+			storenotifysetting.Table: storenotifysetting.ValidColumn,
+			user.Table:               user.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

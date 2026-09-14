@@ -63,6 +63,14 @@ func (r *userRepository) UpdateNickname(ctx context.Context, id int64, nickname 
 	return domainuser.FromEnt(u), nil
 }
 
+func (r *userRepository) UpdatePhone(ctx context.Context, id int64, phone string) (*domainuser.User, error) {
+	u, err := r.client.Ent().User.UpdateOneID(id).SetPhone(phone).Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return domainuser.FromEnt(u), nil
+}
+
 func maskPhone(phone string) string {
 	if len(phone) < 7 {
 		return phone

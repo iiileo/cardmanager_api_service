@@ -12,6 +12,7 @@ import (
 	"card_manager/api_service/internal/api/dto"
 	domainstore "card_manager/api_service/internal/domain/store"
 	domainmember "card_manager/api_service/internal/domain/storemember"
+	domainuser "card_manager/api_service/internal/domain/user"
 	ierr "card_manager/api_service/internal/errors"
 	"card_manager/api_service/internal/logger"
 )
@@ -43,6 +44,7 @@ type StoreService interface {
 type storeService struct {
 	stores   domainstore.Repository
 	members  domainmember.Repository
+	users    domainuser.Repository
 	bizTypes BizTypeService
 	log      *logger.Logger
 }
@@ -50,10 +52,11 @@ type storeService struct {
 func NewStoreService(
 	stores domainstore.Repository,
 	members domainmember.Repository,
+	users domainuser.Repository,
 	bizTypes BizTypeService,
 	log *logger.Logger,
 ) StoreService {
-	return &storeService{stores: stores, members: members, bizTypes: bizTypes, log: log}
+	return &storeService{stores: stores, members: members, users: users, bizTypes: bizTypes, log: log}
 }
 
 func (s *storeService) ListMine(ctx context.Context, userID int64) (*dto.StoreListResponse, error) {
@@ -321,7 +324,11 @@ func (s *storeService) ListStaff(ctx context.Context, userID, storeID int64) (*d
 	if err != nil {
 		return nil, ierr.Internal(err)
 	}
-	return &dto.StaffListResponse{List: toStaffItems(list)}, nil
+	items, err := s.toStaffItems(ctx, list)
+	if err != nil {
+		return nil, err
+	}
+	return &dto.StaffListResponse{List: items}, nil
 }
 
 func (s *storeService) ListApplications(ctx context.Context, userID, storeID int64) (*dto.StaffListResponse, error) {
@@ -332,7 +339,11 @@ func (s *storeService) ListApplications(ctx context.Context, userID, storeID int
 	if err != nil {
 		return nil, ierr.Internal(err)
 	}
-	return &dto.StaffListResponse{List: toStaffItems(list)}, nil
+	items, err := s.toStaffItems(ctx, list)
+	if err != nil {
+		return nil, err
+	}
+	return &dto.StaffListResponse{List: items}, nil
 }
 
 func (s *storeService) Approve(ctx context.Context, userID, storeID, memberID int64) error {
@@ -447,15 +458,36 @@ func (s *storeService) toDetail(ctx context.Context, st *domainstore.Store, role
 	return resp, nil
 }
 
-func toStaffItems(list []*domainmember.Member) []*dto.StaffItem {
+func (s *storeService) toStaffItems(ctx context.Context, list []*domainmember.Member) ([]*dto.StaffItem, error) {
+	nickCache := make(map[int64]string, len(list))
 	out := make([]*dto.StaffItem, 0, len(list))
 	for _, m := range list {
+		nickname, ok := nickCache[m.UserID]
+		if !ok {
+			u, err := s.users.GetByID(ctx, m.UserID)
+			if err != nil {
+				return nil, ierr.Internal(err)
+			}
+			if u != nil {
+				nickname = u.Nickname
+			}
+			nickCache[m.UserID] = nickname
+		}
+
+		displayName := m.DisplayName
+		if displayName == nil || strings.TrimSpace(*displayName) == "" {
+			if nickname != "" {
+				displayName = &nickname
+			}
+		}
+
 		item := &dto.StaffItem{
 			ID:          fmt.Sprintf("%d", m.ID),
 			UserID:      fmt.Sprintf("%d", m.UserID),
 			Role:        m.Role,
 			Status:      m.Status,
-			DisplayName: m.DisplayName,
+			Nickname:    nickname,
+			DisplayName: displayName,
 		}
 		if m.JoinedAt != nil {
 			v := m.JoinedAt.UTC().Format(time.RFC3339)
@@ -463,7 +495,7 @@ func toStaffItems(list []*domainmember.Member) []*dto.StaffItem {
 		}
 		out = append(out, item)
 	}
-	return out
+	return out, nil
 }
 
 func trimPtr(v *string) *string {
