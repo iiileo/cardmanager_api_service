@@ -3,7 +3,7 @@ server:
   mode: local
 
 postgres:
-  host: 192.168.0.2
+  host: 127.0.0.1
   port: 5432
   user: postgres
   password: postgres
@@ -12,6 +12,18 @@ postgres:
 
 logging:
   level: info
+
+access_log:
+  enabled: true
+  file_path: "data/access.jsonl"
+  max_memory: 300
+  max_body_bytes: 8192
+  ui_enabled: true
+  ui_path: "/debug/access-logs"
+  skip_paths:
+    - "/healthz"
+    - "/debug/access-logs"
+    - "/debug/access-logs/api"
 
 auth:
   jwt_secret: "card-manager-dev-secret-change-me"

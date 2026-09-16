@@ -18,6 +18,21 @@ func NewUserRepository(client *postgres.Client) domainuser.Repository {
 	return &userRepository{client: client}
 }
 
+func (r *userRepository) ListByIDs(ctx context.Context, ids []int64) (map[int64]*domainuser.User, error) {
+	out := make(map[int64]*domainuser.User)
+	if len(ids) == 0 {
+		return out, nil
+	}
+	list, err := r.client.Ent().User.Query().Where(user.IDIn(ids...)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, u := range list {
+		out[u.ID] = domainuser.FromEnt(u)
+	}
+	return out, nil
+}
+
 func (r *userRepository) GetByID(ctx context.Context, id int64) (*domainuser.User, error) {
 	u, err := r.client.Ent().User.Get(ctx, id)
 	if err != nil {

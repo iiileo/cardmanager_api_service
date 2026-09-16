@@ -2,6 +2,7 @@
 /bin/
 /dist/
 /tmp/
+/data/
 *.exe
 *.test
 *.out

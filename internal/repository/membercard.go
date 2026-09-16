@@ -24,6 +24,21 @@ func (r *memberCardRepository) withItems(q *ent.MemberCardQuery) *ent.MemberCard
 	})
 }
 
+func (r *memberCardRepository) ListByIDs(ctx context.Context, ids []int64) (map[int64]*domaincard.Card, error) {
+	out := make(map[int64]*domaincard.Card)
+	if len(ids) == 0 {
+		return out, nil
+	}
+	list, err := r.client.Ent().MemberCard.Query().Where(entcard.IDIn(ids...)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range list {
+		out[c.ID] = domaincard.FromEnt(c, nil)
+	}
+	return out, nil
+}
+
 func (r *memberCardRepository) GetByID(ctx context.Context, id int64) (*domaincard.Card, error) {
 	c, err := r.withItems(r.client.Ent().MemberCard.Query().Where(entcard.IDEQ(id))).Only(ctx)
 	if err != nil {

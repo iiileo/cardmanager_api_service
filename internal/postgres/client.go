@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"card_manager/api_service/ent"
+	"card_manager/api_service/internal/accesslog"
 	"card_manager/api_service/internal/config"
 	"card_manager/api_service/internal/logger"
 
@@ -37,7 +38,10 @@ func NewEntClient(lc fx.Lifecycle, cfg *config.Config, log *logger.Logger) (*Cli
 		return nil, fmt.Errorf("ping postgres: %w", err)
 	}
 
-	drv := entsql.OpenDB(dialect.Postgres, db)
+	var drv dialect.Driver = entsql.OpenDB(dialect.Postgres, db)
+	if cfg.AccessLog.Enabled {
+		drv = accesslog.WrapDriver(drv)
+	}
 	entClient := ent.NewClient(ent.Driver(drv))
 
 	c := &Client{ent: entClient, db: db}

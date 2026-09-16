@@ -31,8 +31,11 @@ type LedgerEntryResponse struct {
 }
 
 type LedgerListResponse struct {
-	List  []*LedgerEntryResponse `json:"list"`
-	Total int                    `json:"total"`
+	List     []*LedgerEntryResponse `json:"list"`
+	Total    int                    `json:"total"`
+	Page     int                    `json:"page"`
+	PageSize int                    `json:"page_size"`
+	HasMore  bool                   `json:"has_more"`
 }
 
 // RecordTypeStat 按流水类型 + 卡类型汇总，便于后续图表/报表。

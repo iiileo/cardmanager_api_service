@@ -20,6 +20,21 @@ func NewMemberRepository(client *postgres.Client) domainmember.Repository {
 	return &memberRepository{client: client}
 }
 
+func (r *memberRepository) ListByIDs(ctx context.Context, ids []int64) (map[int64]*domainmember.Member, error) {
+	out := make(map[int64]*domainmember.Member)
+	if len(ids) == 0 {
+		return out, nil
+	}
+	list, err := r.client.Ent().Member.Query().Where(entmember.IDIn(ids...)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range list {
+		out[m.ID] = domainmember.FromEnt(m)
+	}
+	return out, nil
+}
+
 func (r *memberRepository) GetByID(ctx context.Context, id int64) (*domainmember.Member, error) {
 	m, err := r.client.Ent().Member.Get(ctx, id)
 	if err != nil {

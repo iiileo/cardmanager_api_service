@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"strconv"
-
 	"card_manager/api_service/internal/api/dto"
 	"card_manager/api_service/internal/api/response"
 	ierr "card_manager/api_service/internal/errors"
@@ -25,8 +23,7 @@ func (h *MemberHandler) List(c *gin.Context) {
 	if !ok {
 		return
 	}
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+	page, pageSize := pageFromQuery(c)
 	resp, err := h.service.List(c.Request.Context(), userID, storeID, c.Query("q"), page, pageSize)
 	if err != nil {
 		response.Fail(c, err)

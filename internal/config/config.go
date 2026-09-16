@@ -9,10 +9,21 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Postgres PostgresConfig `mapstructure:"postgres"`
-	Logging  LoggingConfig  `mapstructure:"logging"`
-	Auth     AuthConfig     `mapstructure:"auth"`
+	Server    ServerConfig    `mapstructure:"server"`
+	Postgres  PostgresConfig  `mapstructure:"postgres"`
+	Logging   LoggingConfig   `mapstructure:"logging"`
+	Auth      AuthConfig      `mapstructure:"auth"`
+	AccessLog AccessLogConfig `mapstructure:"access_log"`
+}
+
+type AccessLogConfig struct {
+	Enabled      bool     `mapstructure:"enabled"`
+	FilePath     string   `mapstructure:"file_path"`
+	MaxMemory    int      `mapstructure:"max_memory"`
+	MaxBodyBytes int      `mapstructure:"max_body_bytes"`
+	UIEnabled    bool     `mapstructure:"ui_enabled"`
+	UIPath       string   `mapstructure:"ui_path"`
+	SkipPaths    []string `mapstructure:"skip_paths"`
 }
 
 type ServerConfig struct {

@@ -81,7 +81,11 @@ func (s *ledgerService) Get(ctx context.Context, userID, storeID, ledgerID int64
 	if e == nil || e.StoreID != storeID {
 		return nil, ierr.NotFound("流水不存在")
 	}
-	return s.toLedgerDTO(ctx, e), nil
+	rel, err := s.loadLedgerRelated(ctx, []*domainledger.Entry{e})
+	if err != nil {
+		return nil, ierr.Internal(err)
+	}
+	return s.toLedgerDTO(ctx, e, rel), nil
 }
 
 func (s *ledgerService) ListRecharges(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.LedgerListResponse, error) {
@@ -153,11 +157,20 @@ func (s *ledgerService) list(ctx context.Context, userID, storeID int64, q Ledge
 	if err != nil {
 		return nil, ierr.Internal(err)
 	}
+	rel, err := s.loadLedgerRelated(ctx, list)
+	if err != nil {
+		return nil, ierr.Internal(err)
+	}
 	out := make([]*dto.LedgerEntryResponse, 0, len(list))
 	for _, e := range list {
-		out = append(out, s.toLedgerDTO(ctx, e))
+		out = append(out, s.toLedgerDTO(ctx, e, rel))
 	}
-	return &dto.LedgerListResponse{List: out, Total: total}, nil
+	page, pageSize := normalizePage(q.Page, q.PageSize)
+	pg := dto.NewListPage(page, pageSize, total)
+	return &dto.LedgerListResponse{
+		List: out, Total: total,
+		Page: pg.Page, PageSize: pg.PageSize, HasMore: pg.HasMore,
+	}, nil
 }
 
 func (s *ledgerService) stats(ctx context.Context, userID, storeID int64, q LedgerListQuery, types []string) (*dto.RecordStatsResponse, error) {
@@ -198,13 +211,7 @@ func (s *ledgerService) stats(ctx context.Context, userID, storeID int64, q Ledg
 }
 
 func (s *ledgerService) buildListFilter(storeID int64, q LedgerListQuery, fixedTypes []string) (domainledger.ListFilter, error) {
-	page, pageSize := q.Page, q.PageSize
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 || pageSize > 100 {
-		pageSize = 20
-	}
+	page, pageSize := normalizePage(q.Page, q.PageSize)
 	f := domainledger.ListFilter{
 		StoreID:  storeID,
 		Types:    fixedTypes,
@@ -299,7 +306,7 @@ func (s *ledgerService) buildSummaryFilter(storeID int64, q LedgerListQuery, typ
 	}, nil
 }
 
-func (s *ledgerService) toLedgerDTO(ctx context.Context, e *domainledger.Entry) *dto.LedgerEntryResponse {
+func (s *ledgerService) toLedgerDTO(ctx context.Context, e *domainledger.Entry, rel *ledgerRelated) *dto.LedgerEntryResponse {
 	resp := &dto.LedgerEntryResponse{
 		ID:           fmt.Sprintf("%d", e.ID),
 		Type:         e.Type,
@@ -312,13 +319,31 @@ func (s *ledgerService) toLedgerDTO(ctx context.Context, e *domainledger.Entry) 
 		Remark:       e.Remark,
 		CreatedAt:    e.CreatedAt.UTC().Format(time.RFC3339),
 	}
-	if m, err := s.members.GetByID(ctx, e.MemberID); err == nil && m != nil {
+	var m *domainmember.Member
+	var c *domaincard.Card
+	var u *domainuser.User
+	if rel != nil {
+		m = rel.members[e.MemberID]
+		c = rel.cards[e.CardID]
+		u = rel.users[e.OperatorID]
+	} else {
+		if got, err := s.members.GetByID(ctx, e.MemberID); err == nil {
+			m = got
+		}
+		if got, err := s.cards.GetByID(ctx, e.CardID); err == nil {
+			c = got
+		}
+		if got, err := s.users.GetByID(ctx, e.OperatorID); err == nil {
+			u = got
+		}
+	}
+	if m != nil {
 		resp.Member = &dto.MemberBrief{ID: fmt.Sprintf("%d", m.ID), Name: m.Name, Phone: m.Phone}
 	}
-	if c, err := s.cards.GetByID(ctx, e.CardID); err == nil && c != nil {
+	if c != nil {
 		resp.Card = toCardBrief(c)
 	}
-	if u, err := s.users.GetByID(ctx, e.OperatorID); err == nil && u != nil {
+	if u != nil {
 		resp.Operator = &dto.OperatorBrief{ID: fmt.Sprintf("%d", u.ID), Nickname: u.Nickname}
 	}
 	if len(e.Items) > 0 {

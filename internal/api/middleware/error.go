@@ -17,8 +17,9 @@ func ErrorHandler(log *logger.Logger) gin.HandlerFunc {
 
 		err := c.Errors.Last().Err
 		if appErr, ok := ierr.AsAppError(err); ok {
+			status := appErr.HTTPStatus()
 			log.Error(c.Request.Context(), "request failed", "error", err, "path", c.Request.URL.Path)
-			c.JSON(appErr.HTTPStatus(), appErr.ToEnvelope())
+			c.JSON(status, appErr.ToEnvelope())
 			return
 		}
 

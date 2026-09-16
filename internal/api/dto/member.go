@@ -13,8 +13,11 @@ type MemberListItem struct {
 }
 
 type MemberListResponse struct {
-	List  []*MemberListItem `json:"list"`
-	Total int               `json:"total"`
+	List     []*MemberListItem `json:"list"`
+	Total    int               `json:"total"`
+	Page     int               `json:"page"`
+	PageSize int               `json:"page_size"`
+	HasMore  bool              `json:"has_more"`
 }
 
 type MemberDetailResponse struct {
