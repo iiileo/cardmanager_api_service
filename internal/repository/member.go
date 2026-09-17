@@ -31,6 +31,21 @@ func (r *memberRepository) GetByID(ctx context.Context, id int64) (*domainmember
 	return domainmember.FromEnt(m), nil
 }
 
+func (r *memberRepository) MapByIDs(ctx context.Context, ids []int64) (map[int64]*domainmember.Member, error) {
+	out := make(map[int64]*domainmember.Member, len(ids))
+	if len(ids) == 0 {
+		return out, nil
+	}
+	rows, err := r.client.Ent().Member.Query().Where(entmember.IDIn(ids...)).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range rows {
+		out[m.ID] = domainmember.FromEnt(m)
+	}
+	return out, nil
+}
+
 func (r *memberRepository) GetByStorePhone(ctx context.Context, storeID int64, phone string) (*domainmember.Member, error) {
 	m, err := r.client.Ent().Member.Query().
 		Where(entmember.StoreIDEQ(storeID), entmember.PhoneEQ(phone)).

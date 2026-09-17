@@ -5,6 +5,9 @@ import (
 	"time"
 
 	"card_manager/api_service/ent"
+	domainmember "card_manager/api_service/internal/domain/member"
+	domaincard "card_manager/api_service/internal/domain/membercard"
+	domainuser "card_manager/api_service/internal/domain/user"
 )
 
 const (
@@ -54,6 +57,10 @@ type Entry struct {
 	OperatorID   int64
 	Items        []*EntryItem
 	CreatedAt    time.Time
+	// 列表预加载（可选）
+	Member   *domainmember.Member
+	Card     *domaincard.Card
+	Operator *domainuser.User
 }
 
 func ItemFromEnt(it *ent.LedgerEntryItem) *EntryItem {

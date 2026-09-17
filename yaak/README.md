@@ -138,14 +138,21 @@ GET /api/v1/ledger?kind=txn
 - `kind=txn`：充值+消费（不含开卡）
 - 前端用 `type` 区分（`recharge` / `consume_*`）
 - 套餐消费带 `items[]`
-- 汇总：`GET /api/v1/ledger/stats`
+- 汇总：`GET /api/v1/ledger/stats`（或与列表合并：`include_stats=1`）
 
-只要一侧时用 `/recharges` 或 `/consumes`。
+列表一次返回汇总（推荐历史页 / 本月筛选）：
+
+```http
+GET /api/v1/ledger?kind=txn&from=2026-09-01&to=2026-09-15&include_stats=1
+```
+
+响应 `data.stats` 结构与 `/ledger/stats` 相同，少一次 HTTP 往返。
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/v1/ledger?kind=txn` | 充值+消费混合列表 |
-| GET | `/api/v1/ledger/stats` | 混合汇总 |
+| GET | `/api/v1/ledger?include_stats=1` | 列表 + 汇总（同上 Query） |
+| GET | `/api/v1/ledger/stats` | 仅混合汇总 |
 | GET | `/api/v1/recharges` | 仅充值 |
 | GET | `/api/v1/recharges/stats` | 充值汇总 |
 | GET | `/api/v1/recharges/:id` | 充值详情 |
@@ -154,7 +161,7 @@ GET /api/v1/ledger?kind=txn
 | GET | `/api/v1/consumes/:id` | 消费详情 |
 
 公共 Query：`member_id`、`card_id`、`from`、`to`、`page`、`page_size`、`card_type`  
-另：`kind=txn|recharge|consume`，`type=recharge|consume_value|consume_count|consume_pack`
+另：`kind=txn|recharge|consume`，`type=recharge|consume_value|consume_count|consume_pack`，`include_stats=1`（列表附带汇总）
 
 流水写入时会快照 `card_type`，统计按类型/套餐项目聚合，便于后续报表。
 

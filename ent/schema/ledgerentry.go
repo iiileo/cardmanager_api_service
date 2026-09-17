@@ -54,6 +54,11 @@ func (LedgerEntry) Edges() []ent.Edge {
 			Unique().
 			Required().
 			Field("card_id"),
+		edge.From("operator", User.Type).
+			Ref("operated_ledgers").
+			Unique().
+			Required().
+			Field("operator_id"),
 		edge.To("items", LedgerEntryItem.Type),
 	}
 }

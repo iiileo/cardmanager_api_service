@@ -11,6 +11,7 @@ require (
 	github.com/mozillazg/go-pinyin v0.21.0
 	github.com/spf13/viper v1.21.0
 	go.uber.org/fx v1.24.0
+	golang.org/x/sync v0.19.0
 )
 
 require (

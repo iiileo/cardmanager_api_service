@@ -4,7 +4,7 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "./tmp/main"
-  cmd = "GOTOOLCHAIN=go1.25.0 go build -o ./tmp/main ./cmd/server"
+  cmd = "GOTOOLCHAIN=go1.25.0 go build -buildvcs=false -o ./tmp/main ./cmd/server"
   delay = 1000
   exclude_dir = ["tmp", "vendor", "docs", "ent/enttest", ".git"]
   exclude_file = []

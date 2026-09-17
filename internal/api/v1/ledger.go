@@ -2,6 +2,7 @@ package v1
 
 import (
 	"strconv"
+	"strings"
 
 	"card_manager/api_service/internal/api/response"
 	"card_manager/api_service/internal/logger"
@@ -28,15 +29,16 @@ func (h *LedgerHandler) List(c *gin.Context) {
 	resp, err := h.service.List(
 		c.Request.Context(), userID, storeID,
 		service.LedgerListQuery{
-			Kind:     c.Query("kind"),
-			Type:     c.Query("type"),
-			CardType: c.Query("card_type"),
-			MemberID: c.Query("member_id"),
-			CardID:   c.Query("card_id"),
-			From:     c.Query("from"),
-			To:       c.Query("to"),
-			Page:     page,
-			PageSize: pageSize,
+			Kind:         c.Query("kind"),
+			Type:         c.Query("type"),
+			CardType:     c.Query("card_type"),
+			MemberID:     c.Query("member_id"),
+			CardID:       c.Query("card_id"),
+			From:         c.Query("from"),
+			To:           c.Query("to"),
+			Page:         page,
+			PageSize:     pageSize,
+			IncludeStats: queryBool(c.Query("include_stats")),
 		},
 	)
 	if err != nil {
@@ -173,14 +175,24 @@ func listQueryFrom(c *gin.Context) service.LedgerListQuery {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 	return service.LedgerListQuery{
-		Kind:     c.Query("kind"),
-		Type:     c.Query("type"),
-		CardType: c.Query("card_type"),
-		MemberID: c.Query("member_id"),
-		CardID:   c.Query("card_id"),
-		From:     c.Query("from"),
-		To:       c.Query("to"),
-		Page:     page,
-		PageSize: pageSize,
+		Kind:         c.Query("kind"),
+		Type:         c.Query("type"),
+		CardType:     c.Query("card_type"),
+		MemberID:     c.Query("member_id"),
+		CardID:       c.Query("card_id"),
+		From:         c.Query("from"),
+		To:           c.Query("to"),
+		Page:         page,
+		PageSize:     pageSize,
+		IncludeStats: queryBool(c.Query("include_stats")),
+	}
+}
+
+func queryBool(raw string) bool {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
 	}
 }

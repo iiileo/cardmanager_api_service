@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -28,6 +29,12 @@ func (User) Fields() []ent.Field {
 		field.Int8("status").Default(1),
 		field.Time("created_at").Default(time.Now).Immutable(),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
+	}
+}
+
+func (User) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("operated_ledgers", LedgerEntry.Type),
 	}
 }
 

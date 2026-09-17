@@ -23,6 +23,15 @@ type memCardRepo struct {
 func (m *memCardRepo) GetByID(_ context.Context, id int64) (*domaincard.Card, error) {
 	return m.byID[id], nil
 }
+func (m *memCardRepo) MapByIDs(_ context.Context, ids []int64) (map[int64]*domaincard.Card, error) {
+	out := make(map[int64]*domaincard.Card, len(ids))
+	for _, id := range ids {
+		if c := m.byID[id]; c != nil {
+			out[id] = c
+		}
+	}
+	return out, nil
+}
 func (m *memCardRepo) GetByMemberAndType(_ context.Context, storeID, memberID int64, typ string) (*domaincard.Card, error) {
 	var best *domaincard.Card
 	for _, c := range m.byID {
@@ -50,6 +59,15 @@ type memCustomerRepo struct {
 
 func (m *memCustomerRepo) GetByID(_ context.Context, id int64) (*domainmember.Member, error) {
 	return m.byID[id], nil
+}
+func (m *memCustomerRepo) MapByIDs(_ context.Context, ids []int64) (map[int64]*domainmember.Member, error) {
+	out := make(map[int64]*domainmember.Member, len(ids))
+	for _, id := range ids {
+		if m := m.byID[id]; m != nil {
+			out[id] = m
+		}
+	}
+	return out, nil
 }
 func (m *memCustomerRepo) GetByStorePhone(context.Context, int64, string) (*domainmember.Member, error) {
 	return nil, nil

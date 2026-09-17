@@ -16,15 +16,16 @@ import (
 )
 
 type LedgerListQuery struct {
-	Kind     string // 空=不限；txn=充值+消费（不含开卡）
-	Type     string // 精确类型：recharge|consume_value|consume_count|consume_pack|open
-	CardType string // value|count|pack
-	MemberID string
-	CardID   string
-	From     string
-	To       string
-	Page     int
-	PageSize int
+	Kind         string // 空=不限；txn=充值+消费（不含开卡）
+	Type         string // 精确类型：recharge|consume_value|consume_count|consume_pack|open
+	CardType     string // value|count|pack
+	MemberID     string
+	CardID       string
+	From         string
+	To           string
+	Page         int
+	PageSize     int
+	IncludeStats bool // 为 true 时在列表响应中附带 stats，减少二次请求
 }
 
 type LedgerService interface {
@@ -142,9 +143,6 @@ func (s *ledgerService) StatsTxns(ctx context.Context, userID, storeID int64, q 
 }
 
 func (s *ledgerService) list(ctx context.Context, userID, storeID int64, q LedgerListQuery, fixedTypes []string) (*dto.LedgerListResponse, error) {
-	if _, err := s.storeSvc.RequireActiveMember(ctx, userID, storeID); err != nil {
-		return nil, err
-	}
 	f, err := s.buildListFilter(storeID, q, fixedTypes)
 	if err != nil {
 		return nil, err
@@ -153,17 +151,18 @@ func (s *ledgerService) list(ctx context.Context, userID, storeID int64, q Ledge
 	if err != nil {
 		return nil, ierr.Internal(err)
 	}
-	out := make([]*dto.LedgerEntryResponse, 0, len(list))
-	for _, e := range list {
-		out = append(out, s.toLedgerDTO(ctx, e))
+	resp := &dto.LedgerListResponse{List: s.toLedgerDTOs(list), Total: total}
+	if q.IncludeStats {
+		stats, err := s.stats(ctx, userID, storeID, q, fixedTypes)
+		if err != nil {
+			return nil, err
+		}
+		resp.Stats = stats
 	}
-	return &dto.LedgerListResponse{List: out, Total: total}, nil
+	return resp, nil
 }
 
 func (s *ledgerService) stats(ctx context.Context, userID, storeID int64, q LedgerListQuery, types []string) (*dto.RecordStatsResponse, error) {
-	if _, err := s.storeSvc.RequireActiveMember(ctx, userID, storeID); err != nil {
-		return nil, err
-	}
 	sf, err := s.buildSummaryFilter(storeID, q, types)
 	if err != nil {
 		return nil, err
@@ -300,6 +299,25 @@ func (s *ledgerService) buildSummaryFilter(storeID int64, q LedgerListQuery, typ
 }
 
 func (s *ledgerService) toLedgerDTO(ctx context.Context, e *domainledger.Entry) *dto.LedgerEntryResponse {
+	list := s.toLedgerDTOs([]*domainledger.Entry{e})
+	if len(list) == 0 {
+		return nil
+	}
+	return list[0]
+}
+
+func (s *ledgerService) toLedgerDTOs(list []*domainledger.Entry) []*dto.LedgerEntryResponse {
+	if len(list) == 0 {
+		return nil
+	}
+	out := make([]*dto.LedgerEntryResponse, 0, len(list))
+	for _, e := range list {
+		out = append(out, s.entryToDTO(e))
+	}
+	return out
+}
+
+func (s *ledgerService) entryToDTO(e *domainledger.Entry) *dto.LedgerEntryResponse {
 	resp := &dto.LedgerEntryResponse{
 		ID:           fmt.Sprintf("%d", e.ID),
 		Type:         e.Type,
@@ -312,13 +330,13 @@ func (s *ledgerService) toLedgerDTO(ctx context.Context, e *domainledger.Entry) 
 		Remark:       e.Remark,
 		CreatedAt:    e.CreatedAt.UTC().Format(time.RFC3339),
 	}
-	if m, err := s.members.GetByID(ctx, e.MemberID); err == nil && m != nil {
+	if m := e.Member; m != nil {
 		resp.Member = &dto.MemberBrief{ID: fmt.Sprintf("%d", m.ID), Name: m.Name, Phone: m.Phone}
 	}
-	if c, err := s.cards.GetByID(ctx, e.CardID); err == nil && c != nil {
+	if c := e.Card; c != nil {
 		resp.Card = toCardBrief(c)
 	}
-	if u, err := s.users.GetByID(ctx, e.OperatorID); err == nil && u != nil {
+	if u := e.Operator; u != nil {
 		resp.Operator = &dto.OperatorBrief{ID: fmt.Sprintf("%d", u.ID), Nickname: u.Nickname}
 	}
 	if len(e.Items) > 0 {
