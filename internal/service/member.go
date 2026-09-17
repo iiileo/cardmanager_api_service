@@ -51,12 +51,7 @@ func (s *memberService) List(ctx context.Context, userID, storeID int64, q strin
 	if _, err := s.storeSvc.RequireActiveMember(ctx, userID, storeID); err != nil {
 		return nil, err
 	}
-	if page <= 0 {
-		page = 1
-	}
-	if pageSize <= 0 || pageSize > 100 {
-		pageSize = 20
-	}
+	page, pageSize = normalizePage(page, pageSize)
 	list, total, err := s.members.ListByStore(ctx, storeID, q, pageSize, (page-1)*pageSize)
 	if err != nil {
 		return nil, ierr.Internal(err)
@@ -67,7 +62,11 @@ func (s *memberService) List(ctx context.Context, userID, storeID int64, q strin
 			ID: fmt.Sprintf("%d", m.ID), Name: m.Name, Phone: m.Phone,
 		})
 	}
-	return &dto.MemberListResponse{List: out, Total: total}, nil
+	pg := dto.NewListPage(page, pageSize, total)
+	return &dto.MemberListResponse{
+		List: out, Total: total,
+		Page: pg.Page, PageSize: pg.PageSize, HasMore: pg.HasMore,
+	}, nil
 }
 
 func (s *memberService) Get(ctx context.Context, userID, storeID, memberID int64) (*dto.MemberDetailResponse, error) {

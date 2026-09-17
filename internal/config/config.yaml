@@ -13,6 +13,18 @@ postgres:
 logging:
   level: info
 
+access_log:
+  enabled: true
+  file_path: "data/access.jsonl"
+  max_memory: 300
+  max_body_bytes: 8192
+  ui_enabled: true
+  ui_path: "/debug/access-logs"
+  skip_paths:
+    - "/healthz"
+    - "/debug/access-logs"
+    - "/debug/access-logs/api"
+
 auth:
   jwt_secret: "card-manager-dev-secret-change-me"
   access_ttl_seconds: 7200

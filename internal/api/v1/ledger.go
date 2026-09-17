@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"strconv"
 	"strings"
 
 	"card_manager/api_service/internal/api/response"
@@ -24,8 +23,7 @@ func (h *LedgerHandler) List(c *gin.Context) {
 	if !ok {
 		return
 	}
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+	page, pageSize := pageFromQuery(c)
 	resp, err := h.service.List(
 		c.Request.Context(), userID, storeID,
 		service.LedgerListQuery{
@@ -172,8 +170,7 @@ func (h *LedgerHandler) StatsConsumes(c *gin.Context) {
 }
 
 func listQueryFrom(c *gin.Context) service.LedgerListQuery {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+	page, pageSize := pageFromQuery(c)
 	return service.LedgerListQuery{
 		Kind:         c.Query("kind"),
 		Type:         c.Query("type"),

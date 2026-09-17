@@ -32,7 +32,7 @@ func FromEnt(u *ent.User) *User {
 
 type Repository interface {
 	GetByID(ctx context.Context, id int64) (*User, error)
-	MapByIDs(ctx context.Context, ids []int64) (map[int64]*User, error)
+	ListByIDs(ctx context.Context, ids []int64) (map[int64]*User, error)
 	GetByPhone(ctx context.Context, phone string) (*User, error)
 	Create(ctx context.Context, phone, nickname string) (*User, error)
 	UpdateNickname(ctx context.Context, id int64, nickname string) (*User, error)

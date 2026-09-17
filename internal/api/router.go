@@ -7,6 +7,7 @@ import (
 	"card_manager/api_service/internal/api/middleware"
 	v1 "card_manager/api_service/internal/api/v1"
 	"card_manager/api_service/internal/auth"
+	"card_manager/api_service/internal/accesslog"
 	"card_manager/api_service/internal/config"
 	"card_manager/api_service/internal/logger"
 	"card_manager/api_service/internal/service"
@@ -33,6 +34,7 @@ func NewRouter(
 	dashboardHandler *v1.DashboardHandler,
 	notifySettingHandler *v1.NotifySettingHandler,
 	storeSvc service.StoreService,
+	accessStore *accesslog.Store,
 ) *Router {
 	if cfg.Server.Mode == "local" {
 		gin.SetMode(gin.DebugMode)
@@ -42,7 +44,13 @@ func NewRouter(
 
 	engine := gin.New()
 	engine.Use(gin.Recovery())
+	// 访问日志放在 ErrorHandler 外层，以便记录错误处理后的最终响应体
+	engine.Use(middleware.AccessLog(accessStore))
 	engine.Use(middleware.ErrorHandler(log))
+
+	if cfg.AccessLog.UIEnabled && accessStore.Enabled() {
+		accesslog.RegisterRoutes(engine, accessStore, cfg.AccessLog.UIPath)
+	}
 
 	// System
 	engine.GET("/healthz", health.Health)
@@ -91,6 +99,7 @@ func NewRouter(
 			{
 				// 首页统计
 				storeScoped.GET("/home/stats", dashboardHandler.HomeStats)
+				storeScoped.GET("/stats/overview", dashboardHandler.StatsOverview)
 
 				// Staff
 				staff := storeScoped.Group("/staff")

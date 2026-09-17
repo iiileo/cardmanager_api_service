@@ -23,7 +23,7 @@ type memCardRepo struct {
 func (m *memCardRepo) GetByID(_ context.Context, id int64) (*domaincard.Card, error) {
 	return m.byID[id], nil
 }
-func (m *memCardRepo) MapByIDs(_ context.Context, ids []int64) (map[int64]*domaincard.Card, error) {
+func (m *memCardRepo) ListByIDs(_ context.Context, ids []int64) (map[int64]*domaincard.Card, error) {
 	out := make(map[int64]*domaincard.Card, len(ids))
 	for _, id := range ids {
 		if c := m.byID[id]; c != nil {
@@ -60,11 +60,11 @@ type memCustomerRepo struct {
 func (m *memCustomerRepo) GetByID(_ context.Context, id int64) (*domainmember.Member, error) {
 	return m.byID[id], nil
 }
-func (m *memCustomerRepo) MapByIDs(_ context.Context, ids []int64) (map[int64]*domainmember.Member, error) {
+func (m *memCustomerRepo) ListByIDs(_ context.Context, ids []int64) (map[int64]*domainmember.Member, error) {
 	out := make(map[int64]*domainmember.Member, len(ids))
 	for _, id := range ids {
-		if m := m.byID[id]; m != nil {
-			out[id] = m
+		if x := m.byID[id]; x != nil {
+			out[id] = x
 		}
 	}
 	return out, nil

@@ -1,0 +1,56 @@
+---
+description: 修改 HTTP 接口时同步 postman/README 与 Postman 云端（MCP）
+globs: internal/api/**,internal/service/**,internal/repository/**,ent/schema/**,internal/api/router.go
+alwaysApply: false
+---
+
+# API 与 Postman 同步
+
+在 **`api_service`** 中新增、修改或删除 HTTP 接口时，**不得只改代码**：
+
+1. **`postman/README.md`** — 接口说明（Git 内唯一文档源）
+2. **Postman 云端（`user-postman` MCP）** — Collection / Environment 的**唯一**维护处
+
+**禁止**在仓库新增或修改 `*.postman_collection.json`、`*.postman_environment.json`。临时上传用的 JSON 不得提交。
+
+**不要**改 Flutter（`cardmanager/`）；见 `backend-scope.mdc`。
+
+## Postman 云端（MCP）
+
+| 项 | 值 |
+|----|-----|
+| Workspace **卡管家** | `5a4fa48c-2a8a-4137-ac70-40a746b9ca3b` |
+| Collection **卡管家 API** | `50595618-af109a3a-5dd8-4330-8622-03ae4239ecf1` |
+| Environment **Local** | `50595618-d01c6f27-b78b-4db8-80a9-5385265b1eb7` |
+
+接口变更后 Agent 应：
+
+1. 先改 **`postman/README.md`**（目录表、Query、响应说明）
+2. 再用 MCP 同步云端，例如：
+   - 新请求：`createCollectionFolder` + `createCollectionRequest`
+   - 改请求：`updateCollectionRequest` / `putCollectionRequest`
+   - 大批量或全量对齐：`getCollection` 对比后 `putCollection`（`item` 须带 `id`，无 id 会重建节点）
+   - 新环境变量：`updateEnvironment` / `putEnvironment`
+
+Collection 级 **Bearer `{{access_token}}`**；门店接口 **Header `X-Store-Id: {{store_id}}`**。
+
+## Post-response 脚本约定
+
+Postman **Scripts → Post-response**（API：`listen: test`）。脚本**内联**写环境变量，**不要**依赖 Collection Pre-request 里的公共函数（Postman 沙箱里请求级 Post-response 调不到）。
+
+- 联调前 **必须选中 Environment Local**（含 `access_token` / `refresh_token` 等变量；登录 Post-response 会写入）。
+- 公开接口（health、发码、登录、刷新）：Request **`noauth`**
+- 其余接口：Request **Bearer** `{{access_token}}`（勿留 `auth: null`）
+- 自动写环境变量：
+  - 发送短信验证码 → `sms_code`（`data.dev_code`）
+  - 验证码登录 / 刷新 Token → `access_token`、`refresh_token`、`user_id`
+  - 创建门店 → `store_id`、`invite_code`
+  - 新建卡种 → `product_id`；开卡 → `member_id`、`card_id`、`pack_item_id_1/2`
+  - 充值/消费 → `ledger_id`
+
+## 检查清单
+
+- [ ] `router.go` ↔ README 接口目录 ↔ 云端 Collection 一致
+- [ ] 新接口已设 Post-response 脚本（如需）
+- [ ] Query/响应与 `internal/api/dto` 一致
+- [ ] 未在仓库提交 Postman Collection/Environment JSON

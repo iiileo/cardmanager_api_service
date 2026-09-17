@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strconv"
+
 	"card_manager/api_service/internal/api/response"
 	"card_manager/api_service/internal/logger"
 	"card_manager/api_service/internal/service"
@@ -22,6 +24,20 @@ func (h *DashboardHandler) HomeStats(c *gin.Context) {
 		return
 	}
 	resp, err := h.service.HomeStats(c.Request.Context(), userID, storeID, c.Query("month"))
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
+func (h *DashboardHandler) StatsOverview(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	days, _ := strconv.Atoi(c.DefaultQuery("days", "7"))
+	resp, err := h.service.StatsOverview(c.Request.Context(), userID, storeID, days)
 	if err != nil {
 		response.Fail(c, err)
 		return

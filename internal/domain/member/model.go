@@ -41,7 +41,7 @@ type CreateInput struct {
 
 type Repository interface {
 	GetByID(ctx context.Context, id int64) (*Member, error)
-	MapByIDs(ctx context.Context, ids []int64) (map[int64]*Member, error)
+	ListByIDs(ctx context.Context, ids []int64) (map[int64]*Member, error)
 	GetByStorePhone(ctx context.Context, storeID int64, phone string) (*Member, error)
 	Create(ctx context.Context, in CreateInput) (*Member, error)
 	ListByStore(ctx context.Context, storeID int64, q string, limit, offset int) ([]*Member, int, error)

@@ -22,6 +22,10 @@ func (m *memDashRepo) HomeStats(_ context.Context, _ int64, todayFrom, todayTo, 
 	return m.stats, nil
 }
 
+func (m *memDashRepo) StatsOverview(_ context.Context, _ domaindash.StatsOverviewQuery) (*domaindash.StatsOverview, error) {
+	return &domaindash.StatsOverview{}, nil
+}
+
 func TestDashboardService_HomeStats(t *testing.T) {
 	repo := &memDashRepo{stats: &domaindash.HomeStats{
 		Today: domaindash.PeriodStats{
@@ -87,6 +91,20 @@ func TestDashboardService_HomeStats_InvalidMonth(t *testing.T) {
 	)
 	if _, err := svc.HomeStats(context.Background(), 1, 2, "2026/03"); err == nil {
 		t.Fatal("expected validation error")
+	}
+}
+
+func TestDashboardService_StatsOverview_Days(t *testing.T) {
+	svc := NewDashboardService(
+		&memDashRepo{stats: &domaindash.HomeStats{}},
+		okStoreSvc{},
+		logger.NewLogger(&config.Config{Logging: config.LoggingConfig{Level: "error"}}),
+	)
+	if _, err := svc.StatsOverview(context.Background(), 1, 2, 7); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.StatsOverview(context.Background(), 1, 2, 14); err == nil {
+		t.Fatal("expected validation error for days=14")
 	}
 }
 

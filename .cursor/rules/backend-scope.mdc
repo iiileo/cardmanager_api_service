@@ -1,0 +1,30 @@
+---
+description: api_service 仅后端；接口变更须同步 postman/README 与 Postman 云端
+alwaysApply: true
+---
+
+# 后端仓库范围
+
+工作区 **`api_service`** 是 Go HTTP 后端。默认只在本仓库内修改代码与 **`postman/README.md`**。
+
+## 不要改 App
+
+- **禁止**修改 `../cardmanager/`，除非用户**明确要求**改 App。
+
+## 写完 / 改完接口 → 同步 Postman
+
+同一任务内必须更新：
+
+1. **`postman/README.md`** — 接口说明  
+2. **Postman 云端** — 通过 **`user-postman` MCP** 更新 Collection / Environment（Workspace「卡管家」）
+
+**不要**在仓库维护 Postman Collection / Environment JSON 文件。
+
+细则见 **`.cursor/rules/postman-api-sync.mdc`**。
+
+## 完成前自检
+
+- [ ] 代码、README、云端 Collection 一致
+- [ ] 需 Token 的请求使用 Collection Bearer + 登录 Tests
+- [ ] 门店接口带 `X-Store-Id: {{store_id}}`
+- [ ] 未改动 `cardmanager/`（除非用户明确要求）

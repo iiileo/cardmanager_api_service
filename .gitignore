@@ -2,6 +2,7 @@
 /bin/
 /dist/
 /tmp/
+/data/
 *.exe
 *.test
 *.out
@@ -22,3 +23,11 @@ build-errors.log
 # Coverage
 coverage.out
 coverage.html
+
+# Postman — 仅云端 + MCP；勿提交 Collection/Environment 或临时上传 JSON
+postman/*.postman_collection.json
+postman/*.postman_environment.json
+postman/.upload-payload.json
+postman/.put-collection-mcp*.json
+postman/_mcp_put_args.json
+postman/.tmp/

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"card_manager/api_service/internal/accesslog"
 	"card_manager/api_service/internal/api"
 	v1 "card_manager/api_service/internal/api/v1"
 	"card_manager/api_service/internal/auth"
@@ -16,6 +17,7 @@ func main() {
 	fx.New(
 		fx.Provide(
 			config.NewConfig,
+			accesslog.NewStore,
 			logger.NewLogger,
 			postgres.NewEntClient,
 			auth.NewTokenManager,

@@ -22,7 +22,7 @@ type memUserRepo struct {
 func (m *memUserRepo) GetByID(_ context.Context, id int64) (*domainuser.User, error) {
 	return m.byID[id], nil
 }
-func (m *memUserRepo) MapByIDs(_ context.Context, ids []int64) (map[int64]*domainuser.User, error) {
+func (m *memUserRepo) ListByIDs(_ context.Context, ids []int64) (map[int64]*domainuser.User, error) {
 	out := make(map[int64]*domainuser.User, len(ids))
 	for _, id := range ids {
 		if u := m.byID[id]; u != nil {
