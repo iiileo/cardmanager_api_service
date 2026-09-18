@@ -7,7 +7,10 @@ import (
 	"card_manager/api_service/ent"
 )
 
-const StatusActive int8 = 1
+const (
+	StatusActive   int8 = 1
+	StatusInactive int8 = 0
+)
 
 type BizType struct {
 	ID        int64

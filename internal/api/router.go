@@ -71,6 +71,7 @@ func NewRouter(
 				me.GET("/me", authHandler.Me)
 				me.PATCH("/me", authHandler.UpdateMe)
 				me.PATCH("/me/phone", authHandler.UpdatePhone)
+				me.DELETE("/me", authHandler.DeleteAccount)
 			}
 		}
 

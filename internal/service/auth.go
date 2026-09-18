@@ -28,6 +28,7 @@ type AuthService interface {
 	Me(ctx context.Context, userID int64) (*dto.UserInfo, error)
 	UpdateMe(ctx context.Context, userID int64, nickname string) (*dto.UserInfo, error)
 	UpdatePhone(ctx context.Context, userID int64, req dto.UpdatePhoneRequest) (*dto.UserInfo, error)
+	DeleteAccount(ctx context.Context, userID int64, confirm bool) error
 }
 
 type LoginMeta struct {
@@ -270,6 +271,25 @@ func (s *authService) UpdatePhone(ctx context.Context, userID int64, req dto.Upd
 	}
 	s.log.Info(ctx, "phone updated", "user_id", userID)
 	return toUserInfo(updated), nil
+}
+
+func (s *authService) DeleteAccount(ctx context.Context, userID int64, confirm bool) error {
+	if !confirm {
+		return ierr.Validation("请确认注销（confirm 须为 true）")
+	}
+	u, err := s.users.GetByID(ctx, userID)
+	if err != nil {
+		return ierr.Internal(err)
+	}
+	if u == nil {
+		return ierr.Unauthorized("")
+	}
+	if err := s.users.DeleteAccount(ctx, userID); err != nil {
+		s.log.Error(ctx, "delete account failed", "user_id", userID, "err", err)
+		return ierr.Internal(err)
+	}
+	s.log.Info(ctx, "account deleted", "user_id", userID)
+	return nil
 }
 
 func (s *authService) issueTokens(ctx context.Context, u *domainuser.User, meta LoginMeta) (*dto.TokenResponse, error) {

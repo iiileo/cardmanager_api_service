@@ -37,4 +37,6 @@ type Repository interface {
 	Create(ctx context.Context, phone, nickname string) (*User, error)
 	UpdateNickname(ctx context.Context, id int64, nickname string) (*User, error)
 	UpdatePhone(ctx context.Context, id int64, phone string) (*User, error)
+	// DeleteAccount 注销并删除该用户相关数据（含名下门店业务数据）。
+	DeleteAccount(ctx context.Context, userID int64) error
 }

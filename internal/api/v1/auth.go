@@ -127,6 +127,24 @@ func (h *AuthHandler) UpdatePhone(c *gin.Context) {
 	response.OK(c, resp)
 }
 
+func (h *AuthHandler) DeleteAccount(c *gin.Context) {
+	userID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, ierr.Unauthorized(""))
+		return
+	}
+	var req dto.DeleteAccountRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, ierr.Validation(ierr.MsgBadRequest))
+		return
+	}
+	if err := h.service.DeleteAccount(c.Request.Context(), userID, req.Confirm); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, gin.H{})
+}
+
 func loginMeta(c *gin.Context) service.LoginMeta {
 	return service.LoginMeta{
 		IP:        c.ClientIP(),

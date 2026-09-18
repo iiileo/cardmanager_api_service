@@ -27,6 +27,11 @@ type UpdatePhoneRequest struct {
 	Code  string `json:"code" binding:"required"`
 }
 
+// DeleteAccountRequest 注销账号。confirm 必须为 true。
+type DeleteAccountRequest struct {
+	Confirm bool `json:"confirm" binding:"required"`
+}
+
 type UserInfo struct {
 	ID       string `json:"id"`
 	Phone    string `json:"phone"`

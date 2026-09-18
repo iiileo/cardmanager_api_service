@@ -54,6 +54,15 @@ func (m *memUserRepo) UpdatePhone(_ context.Context, id int64, phone string) (*d
 	m.byPhone[phone] = u
 	return u, nil
 }
+func (m *memUserRepo) DeleteAccount(_ context.Context, userID int64) error {
+	u := m.byID[userID]
+	if u == nil {
+		return nil
+	}
+	delete(m.byPhone, u.Phone)
+	delete(m.byID, userID)
+	return nil
+}
 
 type memSMSRepo struct {
 	items []*domainsms.SmsCode
@@ -202,5 +211,32 @@ func TestAuthService_UpdatePhone_Conflict(t *testing.T) {
 		Phone: "13900139000", Code: "123456",
 	}); err == nil {
 		t.Fatal("expected conflict")
+	}
+}
+
+func TestAuthService_DeleteAccount(t *testing.T) {
+	cfg := &config.Config{Auth: config.AuthConfig{
+		SmsDevCode: "123456", SmsDevMode: true, SmsCodeTTLSeconds: 300,
+		JWTSecret: "test", AccessTTLSeconds: 7200, RefreshTTLSeconds: 2592000,
+	}}
+	log := logger.NewLogger(&config.Config{Logging: config.LoggingConfig{Level: "error"}})
+	users := &memUserRepo{
+		byPhone: map[string]*domainuser.User{
+			"13800138000": {ID: 1, Phone: "13800138000", Status: 1, Nickname: "u1"},
+		},
+		byID: map[int64]*domainuser.User{
+			1: {ID: 1, Phone: "13800138000", Status: 1, Nickname: "u1"},
+		},
+	}
+	svc := NewAuthService(users, &memRTRepo{byHash: map[string]*domainrt.RefreshToken{}}, &memSMSRepo{}, sms.NewDevSender(log), auth.NewTokenManager(cfg), cfg, log)
+
+	if err := svc.DeleteAccount(context.Background(), 1, false); err == nil {
+		t.Fatal("expected validation error without confirm")
+	}
+	if err := svc.DeleteAccount(context.Background(), 1, true); err != nil {
+		t.Fatal(err)
+	}
+	if users.byID[1] != nil {
+		t.Fatal("user should be deleted")
 	}
 }
