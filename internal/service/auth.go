@@ -15,6 +15,7 @@ import (
 	domainuser "card_manager/api_service/internal/domain/user"
 	ierr "card_manager/api_service/internal/errors"
 	"card_manager/api_service/internal/logger"
+	"card_manager/api_service/internal/sms"
 )
 
 var phoneRE = regexp.MustCompile(`^1\d{10}$`)
@@ -36,29 +37,32 @@ type LoginMeta struct {
 }
 
 type authService struct {
-	users  domainuser.Repository
-	tokens domainrt.Repository
-	sms    domainsms.Repository
-	tm     *auth.TokenManager
-	cfg    *config.Config
-	log    *logger.Logger
+	users     domainuser.Repository
+	tokens    domainrt.Repository
+	sms       domainsms.Repository
+	smsSender sms.Sender
+	tm        *auth.TokenManager
+	cfg       *config.Config
+	log       *logger.Logger
 }
 
 func NewAuthService(
 	users domainuser.Repository,
 	tokens domainrt.Repository,
-	sms domainsms.Repository,
+	smsRepo domainsms.Repository,
+	smsSender sms.Sender,
 	tm *auth.TokenManager,
 	cfg *config.Config,
 	log *logger.Logger,
 ) AuthService {
 	return &authService{
-		users:  users,
-		tokens: tokens,
-		sms:    sms,
-		tm:     tm,
-		cfg:    cfg,
-		log:    log,
+		users:     users,
+		tokens:    tokens,
+		sms:       smsRepo,
+		smsSender: smsSender,
+		tm:        tm,
+		cfg:       cfg,
+		log:       log,
 	}
 }
 
@@ -89,6 +93,20 @@ func (s *authService) SendSMS(ctx context.Context, req dto.SendSMSRequest) (*dto
 		ExpiresAt: expiresAt,
 	}); err != nil {
 		return nil, ierr.Internal(err)
+	}
+
+	ttlMinutes := int((s.cfg.Auth.SmsCodeTTLSeconds + 59) / 60)
+	if ttlMinutes < 1 {
+		ttlMinutes = 1
+	}
+	if err := s.smsSender.SendCode(ctx, sms.SendCodeInput{
+		Phone:      phone,
+		Code:       code,
+		Scene:      scene,
+		TTLMinutes: ttlMinutes,
+	}); err != nil {
+		s.log.Error(ctx, "sms send failed", "phone", phone, "scene", scene, "err", err)
+		return nil, ierr.NewError("验证码发送失败，请稍后重试").Mark(ierr.ErrInternal)
 	}
 
 	s.log.Info(ctx, "sms code created", "phone", phone, "scene", scene)

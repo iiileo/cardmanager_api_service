@@ -16,7 +16,7 @@
 
 ### 鉴权说明
 
-- **仅 4 个公开请求** 使用 `No Auth`：`/healthz`、发验证码、登录、刷新 Token。
+- **仅 4 个公开请求** 使用 `No Auth`：`/healthz`、发验证码、登录、刷新令牌。
 - **其余请求** 在 Postman 里显式设为 **Bearer Token** `{{access_token}}`（云端 `auth: null` 不会继承 Collection，故逐请求配置）。
 - Collection 级 Bearer 仍保留，与请求级 Bearer 一致。
 - 门店内接口另加 Header **`X-Store-Id: {{store_id}}`**。
@@ -29,7 +29,7 @@
 |------|----------|
 | 发送短信验证码 | `sms_code` ← `data.dev_code` |
 | 验证码登录 | `access_token`、`refresh_token`、`user_id` |
-| 刷新 Token | `access_token`、`refresh_token` |
+| 刷新令牌 | `access_token`、`refresh_token` |
 | 发送绑定手机验证码 | `bind_sms_code` |
 | 创建门店 | `store_id`、`invite_code` |
 | 新建卡种 | `product_id` |
@@ -38,11 +38,11 @@
 
 ### 推荐联调顺序
 
-1. **Auth / 发送短信验证码**（Post-response 写入 `sms_code`）
-2. **Auth / 验证码登录**（Post-response 写入 `access_token`、`refresh_token`）
-3. **Stores / 创建门店**（Post-response 写入 `store_id`）
-4. **Dashboard / 首页统计** 或 **经营数据 overview**
-5. **CardProducts → Members / 开卡 → Cards / 充值或扣除**
+1. **认证 / 发送短信验证码**（Post-response 写入 `sms_code`）
+2. **认证 / 验证码登录**（Post-response 写入 `access_token`、`refresh_token`）
+3. **门店 / 创建门店**（Post-response 写入 `store_id`）
+4. **首页与经营数据 / 首页统计** 或 **经营数据概览**
+5. **卡种 → 会员 / 开卡 → 会员卡 / 充值或扣除**
 
 ---
 
@@ -66,8 +66,8 @@
 
 | Header | 说明 |
 |--------|------|
-| `Authorization: Bearer {{access_token}}` | 除发验证码、登录、刷新 Token 外必填 |
-| `X-Store-Id: {{store_id}}` | **门店内**接口必填（见下表「需门店」列） |
+| `Authorization: Bearer {{access_token}}` | 除发验证码、登录、刷新令牌外必填 |
+| `X-Store-Id: {{store_id}}` | **门店内**接口必填（见接口目录「需门店」列） |
 
 金额字段单位为**分**（整数）。流水日期 `from` / `to` 为 **`YYYY-MM-DD`**，按服务器**本地时区**自然日。
 
@@ -112,52 +112,62 @@
 
 ## 接口目录
 
-| 方法 | 路径 | 需 Token | 需 X-Store-Id | 说明 |
-|------|------|:--------:|:-------------:|------|
-| GET | `/healthz` | | | 健康检查 |
-| POST | `/api/v1/auth/sms/send` | | | 发送短信验证码 |
-| POST | `/api/v1/auth/login/sms` | | | 验证码登录 |
-| POST | `/api/v1/auth/token/refresh` | | | 刷新 Token |
-| POST | `/api/v1/auth/logout` | ✓ | | 登出 |
-| GET | `/api/v1/auth/me` | ✓ | | 当前用户 |
-| PATCH | `/api/v1/auth/me` | ✓ | | 改昵称 |
-| PATCH | `/api/v1/auth/me/phone` | ✓ | | 改手机号 |
-| GET | `/api/v1/biz-types` | ✓ | | 业态列表 |
-| GET | `/api/v1/stores` | ✓ | | 我的门店 |
-| POST | `/api/v1/stores` | ✓ | | 创建门店 |
-| GET | `/api/v1/stores/invite/:code` | ✓ | | 预览邀请 |
-| POST | `/api/v1/stores/join` | ✓ | | 加入门店 |
-| GET/PATCH | `/api/v1/stores/:id` | ✓ | | 门店详情 / 更新 |
-| GET/POST | `/api/v1/stores/:id/invite-code` | ✓ | | 邀请码 / 刷新 |
-| GET | `/api/v1/home/stats` | ✓ | ✓ | 首页统计 |
-| GET | `/api/v1/stats/overview` | ✓ | ✓ | 经营数据 Tab |
-| GET | `/api/v1/staff` | ✓ | ✓ | 在职员工 |
-| GET | `/api/v1/staff/applications` | ✓ | ✓ | 入店申请（老板） |
-| POST | `/api/v1/staff/applications/:id/approve` | ✓ | ✓ | 同意（老板） |
-| POST | `/api/v1/staff/applications/:id/reject` | ✓ | ✓ | 拒绝（老板） |
-| GET/POST/DELETE | `/api/v1/card-products` | ✓ | ✓ | 卡种列表 / 新建 / 删除（写删需老板） |
-| GET | `/api/v1/members` | ✓ | ✓ | 会员列表 |
-| POST | `/api/v1/members/cards` | ✓ | ✓ | 开卡 |
-| GET | `/api/v1/members/:id` | ✓ | ✓ | 会员详情 |
-| GET | `/api/v1/members/:id/cards` | ✓ | ✓ | 会员持卡列表 |
-| GET | `/api/v1/cards/:id` | ✓ | ✓ | 持卡详情 |
-| POST | `/api/v1/cards/:id/recharge` | ✓ | ✓ | 充值 |
-| POST | `/api/v1/cards/:id/consume` | ✓ | ✓ | 消费/扣次 |
-| GET | `/api/v1/ledger` | ✓ | ✓ | 流水列表 |
-| GET | `/api/v1/ledger/stats` | ✓ | ✓ | 流水汇总 |
-| GET | `/api/v1/ledger/:id` | ✓ | ✓ | 流水详情 |
-| GET | `/api/v1/recharges` | ✓ | ✓ | 充值列表 |
-| GET | `/api/v1/recharges/stats` | ✓ | ✓ | 充值汇总 |
-| GET | `/api/v1/recharges/:id` | ✓ | ✓ | 充值详情 |
-| GET | `/api/v1/consumes` | ✓ | ✓ | 消费列表 |
-| GET | `/api/v1/consumes/stats` | ✓ | ✓ | 消费汇总 |
-| GET | `/api/v1/consumes/:id` | ✓ | ✓ | 消费详情 |
-| GET/PUT | `/api/v1/notify/settings` | ✓ | ✓ | 通知配置（老板） |
+与 Postman Collection 分组一致。路径为实际 URL；`:id` 等为路径参数。
+
+| 模块 | 方法 | 路径 | 需登录 | 需门店 | 说明 |
+|------|------|------|:------:|:------:|------|
+| 系统 | GET | `/healthz` | | | 健康检查 |
+| 认证 | POST | `/api/v1/auth/sms/send` | | | 发送短信验证码 |
+| 认证 | POST | `/api/v1/auth/login/sms` | | | 验证码登录 |
+| 认证 | POST | `/api/v1/auth/token/refresh` | | | 刷新令牌 |
+| 认证 | POST | `/api/v1/auth/logout` | ✓ | | 退出登录 |
+| 认证 | GET | `/api/v1/auth/me` | ✓ | | 当前用户 |
+| 认证 | PATCH | `/api/v1/auth/me` | ✓ | | 修改昵称 |
+| 认证 | PATCH | `/api/v1/auth/me/phone` | ✓ | | 修改手机号 |
+| 业态 | GET | `/api/v1/biz-types` | ✓ | | 业态列表 |
+| 门店 | GET | `/api/v1/stores` | ✓ | | 我的门店列表 |
+| 门店 | POST | `/api/v1/stores` | ✓ | | 创建门店 |
+| 门店 | GET | `/api/v1/stores/invite/:code` | ✓ | | 邀请码预览门店 |
+| 门店 | POST | `/api/v1/stores/join` | ✓ | | 申请加入门店 |
+| 门店 | GET | `/api/v1/stores/:id` | ✓ | | 门店详情 |
+| 门店 | PATCH | `/api/v1/stores/:id` | ✓ | | 更新门店资料 |
+| 门店 | GET | `/api/v1/stores/:id/invite-code` | ✓ | | 查看邀请码 |
+| 门店 | POST | `/api/v1/stores/:id/invite-code/refresh` | ✓ | | 刷新邀请码 |
+| 首页与经营数据 | GET | `/api/v1/home/stats` | ✓ | ✓ | 首页统计 |
+| 首页与经营数据 | GET | `/api/v1/stats/overview` | ✓ | ✓ | 经营数据概览 |
+| 员工 | GET | `/api/v1/staff` | ✓ | ✓ | 在职员工列表 |
+| 员工 | GET | `/api/v1/staff/applications` | ✓ | ✓ | 待审核入店申请（老板） |
+| 员工 | POST | `/api/v1/staff/applications/:id/approve` | ✓ | ✓ | 同意入店（老板） |
+| 员工 | POST | `/api/v1/staff/applications/:id/reject` | ✓ | ✓ | 拒绝入店（老板） |
+| 卡种 | GET | `/api/v1/card-products` | ✓ | ✓ | 卡种列表 |
+| 卡种 | POST | `/api/v1/card-products` | ✓ | ✓ | 新建卡种（老板） |
+| 卡种 | DELETE | `/api/v1/card-products/:id` | ✓ | ✓ | 删除卡种（老板） |
+| 会员 | GET | `/api/v1/members` | ✓ | ✓ | 会员列表 |
+| 会员 | POST | `/api/v1/members/cards` | ✓ | ✓ | 开卡 |
+| 会员 | GET | `/api/v1/members/:id` | ✓ | ✓ | 会员详情 |
+| 会员 | GET | `/api/v1/members/:id/cards` | ✓ | ✓ | 会员名下卡列表 |
+| 会员卡 | GET | `/api/v1/cards/:id` | ✓ | ✓ | 卡详情 |
+| 会员卡 | POST | `/api/v1/cards/:id/recharge` | ✓ | ✓ | 充值 |
+| 会员卡 | POST | `/api/v1/cards/:id/consume` | ✓ | ✓ | 消费/扣次 |
+| 流水 | GET | `/api/v1/ledger` | ✓ | ✓ | 流水列表 |
+| 流水 | GET | `/api/v1/ledger/stats` | ✓ | ✓ | 流水汇总 |
+| 流水 | GET | `/api/v1/ledger/:id` | ✓ | ✓ | 流水详情 |
+| 流水 | GET | `/api/v1/recharges` | ✓ | ✓ | 充值记录列表 |
+| 流水 | GET | `/api/v1/recharges/stats` | ✓ | ✓ | 充值汇总 |
+| 流水 | GET | `/api/v1/recharges/:id` | ✓ | ✓ | 充值详情 |
+| 流水 | GET | `/api/v1/consumes` | ✓ | ✓ | 消费记录列表 |
+| 流水 | GET | `/api/v1/consumes/stats` | ✓ | ✓ | 消费汇总 |
+| 流水 | GET | `/api/v1/consumes/:id` | ✓ | ✓ | 消费详情 |
+| 通知 | GET | `/api/v1/notify/settings` | ✓ | ✓ | 通知设置列表（老板） |
+| 通知 | GET | `/api/v1/notify/settings/open` | ✓ | ✓ | 开卡通知详情（老板） |
+| 通知 | PUT | `/api/v1/notify/settings/open` | ✓ | ✓ | 更新开卡通知（老板） |
 
 本地调试（`access_log.ui_enabled: true`）：
 
-| GET | `/debug/access-logs` | 访问日志 UI |
-| GET | `/debug/access-logs/api?limit=100` | 访问日志 JSON |
+| 模块 | 方法 | 路径 | 说明 |
+|------|------|------|------|
+| 调试 | GET | `/debug/access-logs` | 访问日志页面 |
+| 调试 | GET | `/debug/access-logs/api?limit=100` | 访问日志 JSON |
 
 ---
 
@@ -173,7 +183,16 @@
 
 改手机号场景：`scene` 为 `bind_phone`（以代码为准）。
 
-Postman **Post-response**（云端「发送短信验证码」）：`code === 0` 时把 `data.dev_code` 写入 `sms_code`。
+短信通道由配置 `auth.sms_provider` 选择（`dev` / `spug`），实现见 `internal/sms.Sender`：
+
+| 配置 | 行为 |
+|------|------|
+| `sms_provider: dev`（或 `sms_dev_mode: true`） | 不真正发短信；响应可带 `data.dev_code` |
+| `sms_provider: spug` | [Spug 推送助手](https://push.spug.cc/guide/sms)：`POST https://push.spug.cc/sms/<模板编码>`，body `to`/`code`，带有效期模板时另传 `number`（分钟） |
+
+生产请设 `sms_dev_mode: false`、`sms_provider: spug`，并填写控制台复制的 `sms_spug_template_code`（勿写入客户端）。
+
+Postman **Post-response**（云端「发送短信验证码」）：`code === 0` 时把 `data.dev_code` 写入 `sms_code`（仅开发模式有该字段）。
 
 ### 验证码登录
 
@@ -194,7 +213,7 @@ Postman **Post-response**（云端「发送短信验证码」）：`code === 0` 
 
 Postman **Post-response**（「验证码登录」）：`code === 0` 时写入 `access_token`、`refresh_token`、`user_id`。
 
-### 刷新 Token
+### 刷新令牌
 
 `POST {{baseUrl}}/api/v1/auth/token/refresh`
 
@@ -204,7 +223,7 @@ Postman **Post-response**（「验证码登录」）：`code === 0` 时写入 `a
 
 `data` 结构与登录相同（无 `user` 时仅更新 token 字段）。
 
-Postman **Post-response**（「刷新 Token」）：`code === 0` 时覆盖 `access_token`、`refresh_token`。
+Postman **Post-response**（「刷新令牌」）：`code === 0` 时覆盖 `access_token`、`refresh_token`。
 
 ### 修改手机号
 
@@ -297,7 +316,7 @@ PUT body：`enabled`、`notify_boss`、`wechat`、`app`（启用时至少一种�
 
 1. 发验证码 → 登录 → 保存 `access_token`
 2. 业态列表 → 创建门店 → 设置 `X-Store-Id`
-3. 首页统计 / 经营数据 overview
+3. 首页统计 / 经营数据概览
 4. 新建卡种 → 开卡 → 充值或消费
 5. 流水列表（`kind=txn` + `include_stats=1` 验证汇总）
 

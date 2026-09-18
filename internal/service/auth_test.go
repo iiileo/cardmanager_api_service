@@ -11,6 +11,7 @@ import (
 	domainsms "card_manager/api_service/internal/domain/smscode"
 	domainuser "card_manager/api_service/internal/domain/user"
 	"card_manager/api_service/internal/logger"
+	"card_manager/api_service/internal/sms"
 )
 
 type memUserRepo struct {
@@ -119,9 +120,9 @@ func TestAuthService_LoginSMS(t *testing.T) {
 	}}
 	log := logger.NewLogger(&config.Config{Logging: config.LoggingConfig{Level: "error"}})
 	users := &memUserRepo{byPhone: map[string]*domainuser.User{}, byID: map[int64]*domainuser.User{}}
-	sms := &memSMSRepo{}
+	smsRepo := &memSMSRepo{}
 	rt := &memRTRepo{byHash: map[string]*domainrt.RefreshToken{}}
-	svc := NewAuthService(users, rt, sms, auth.NewTokenManager(cfg), cfg, log)
+	svc := NewAuthService(users, rt, smsRepo, sms.NewDevSender(log), auth.NewTokenManager(cfg), cfg, log)
 
 	if _, err := svc.SendSMS(context.Background(), dto.SendSMSRequest{Phone: "13800138000", Scene: "login"}); err != nil {
 		t.Fatal(err)
@@ -146,9 +147,9 @@ func TestAuthService_UpdatePhone(t *testing.T) {
 	}}
 	log := logger.NewLogger(&config.Config{Logging: config.LoggingConfig{Level: "error"}})
 	users := &memUserRepo{byPhone: map[string]*domainuser.User{}, byID: map[int64]*domainuser.User{}}
-	sms := &memSMSRepo{}
+	smsRepo := &memSMSRepo{}
 	rt := &memRTRepo{byHash: map[string]*domainrt.RefreshToken{}}
-	svc := NewAuthService(users, rt, sms, auth.NewTokenManager(cfg), cfg, log)
+	svc := NewAuthService(users, rt, smsRepo, sms.NewDevSender(log), auth.NewTokenManager(cfg), cfg, log)
 
 	users.byPhone["13800138000"] = &domainuser.User{ID: 1, Phone: "13800138000", Nickname: "店长", Status: 1}
 	users.byID[1] = users.byPhone["13800138000"]
@@ -189,8 +190,8 @@ func TestAuthService_UpdatePhone_Conflict(t *testing.T) {
 			2: {ID: 2, Phone: "13900139000", Status: 1},
 		},
 	}
-	sms := &memSMSRepo{}
-	svc := NewAuthService(users, &memRTRepo{byHash: map[string]*domainrt.RefreshToken{}}, sms, auth.NewTokenManager(cfg), cfg, log)
+	smsRepo := &memSMSRepo{}
+	svc := NewAuthService(users, &memRTRepo{byHash: map[string]*domainrt.RefreshToken{}}, smsRepo, sms.NewDevSender(log), auth.NewTokenManager(cfg), cfg, log)
 
 	if _, err := svc.SendSMS(context.Background(), dto.SendSMSRequest{
 		Phone: "13900139000", Scene: "bind_phone",

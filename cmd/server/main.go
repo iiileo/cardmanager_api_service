@@ -10,6 +10,7 @@ import (
 	"card_manager/api_service/internal/postgres"
 	"card_manager/api_service/internal/repository"
 	"card_manager/api_service/internal/service"
+	"card_manager/api_service/internal/sms"
 	"go.uber.org/fx"
 )
 
@@ -21,6 +22,7 @@ func main() {
 			logger.NewLogger,
 			postgres.NewEntClient,
 			auth.NewTokenManager,
+			sms.NewSender,
 
 			repository.NewUserRepository,
 			repository.NewRefreshTokenRepository,

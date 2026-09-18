@@ -25,3 +25,6 @@ auth:
   sms_code_ttl_seconds: 300
   sms_dev_code: "123456"
   sms_dev_mode: true
+  sms_provider: "dev"
+  sms_spug_template_code: ""
+  sms_spug_with_ttl: true

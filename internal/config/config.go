@@ -58,6 +58,12 @@ type AuthConfig struct {
 	SmsCodeTTLSeconds int64  `mapstructure:"sms_code_ttl_seconds"`
 	SmsDevCode        string `mapstructure:"sms_dev_code"`
 	SmsDevMode        bool   `mapstructure:"sms_dev_mode"`
+	// SmsProvider 发送通道：dev | spug；空则 sms_dev_mode=true 用 dev，否则 spug。
+	SmsProvider string `mapstructure:"sms_provider"`
+	// Spug 推送助手短信（https://push.spug.cc/guide/sms）
+	SmsSpugTemplateCode string `mapstructure:"sms_spug_template_code"`
+	// SmsSpugWithTTL 为 true 时请求体带 number（分钟），对应带有效时长的官方模板。
+	SmsSpugWithTTL bool `mapstructure:"sms_spug_with_ttl"`
 }
 
 func NewConfig() (*Config, error) {
@@ -109,6 +115,25 @@ func (c *Config) Validate() error {
 	}
 	if c.Auth.SmsDevCode == "" {
 		c.Auth.SmsDevCode = "123456"
+	}
+	provider := strings.ToLower(strings.TrimSpace(c.Auth.SmsProvider))
+	if provider == "" {
+		if c.Auth.SmsDevMode {
+			provider = "dev"
+		} else {
+			provider = "spug"
+		}
+	}
+	c.Auth.SmsProvider = provider
+	switch provider {
+	case "dev", "noop", "local":
+		// ok
+	case "spug":
+		if strings.TrimSpace(c.Auth.SmsSpugTemplateCode) == "" {
+			return fmt.Errorf("auth.sms_spug_template_code is required when sms_provider=spug")
+		}
+	default:
+		return fmt.Errorf("auth.sms_provider must be dev or spug, got %q", provider)
 	}
 	return nil
 }
