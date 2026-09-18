@@ -75,7 +75,7 @@ func NewConfig() (*Config, error) {
 	v.AddConfigPath("internal/config")
 	v.AddConfigPath(".")
 
-	v.SetEnvPrefix("CARDMANAGER")
+	v.SetEnvPrefix("CM")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 

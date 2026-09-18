@@ -27,15 +27,15 @@ access_log:
 
 auth:
   jwt_secret: "card-manager-dev-secret-change-me"
-  access_ttl_seconds: 7200
+  access_ttl_seconds: 120
   refresh_ttl_seconds: 2592000
   sms_code_ttl_seconds: 300
   sms_dev_code: "123456"
   # true：不真正发短信，响应带 data.dev_code；生产请设 false 并配置 spug
-  sms_dev_mode: true
+  sms_dev_mode: false
   # 发送通道：dev | spug（空则按 sms_dev_mode 推断）
-  sms_provider: "dev"
+  sms_provider: "spug"
   # Spug 推送助手 https://push.spug.cc/guide/sms （sms_provider=spug 时必填）
-  sms_spug_template_code: ""
+  sms_spug_template_code: "9u0j4Lm2Qauv14LSJVONiw"
   # 选用「带有效时长」官方模板时设为 true，请求会带 number（分钟）
   sms_spug_with_ttl: true

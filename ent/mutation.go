@@ -3264,14 +3264,14 @@ type LedgerEntryMutation struct {
 	times_after      *int
 	addtimes_after   *int
 	remark           *string
-	operator_id      *int64
-	addoperator_id   *int64
 	created_at       *time.Time
 	clearedFields    map[string]struct{}
 	member           *int64
 	clearedmember    bool
 	card             *int64
 	clearedcard      bool
+	operator         *int64
+	clearedoperator  bool
 	items            map[int64]struct{}
 	removeditems     map[int64]struct{}
 	cleareditems     bool
@@ -3964,13 +3964,12 @@ func (m *LedgerEntryMutation) ResetRemark() {
 
 // SetOperatorID sets the "operator_id" field.
 func (m *LedgerEntryMutation) SetOperatorID(i int64) {
-	m.operator_id = &i
-	m.addoperator_id = nil
+	m.operator = &i
 }
 
 // OperatorID returns the value of the "operator_id" field in the mutation.
 func (m *LedgerEntryMutation) OperatorID() (r int64, exists bool) {
-	v := m.operator_id
+	v := m.operator
 	if v == nil {
 		return
 	}
@@ -3994,28 +3993,9 @@ func (m *LedgerEntryMutation) OldOperatorID(ctx context.Context) (v int64, err e
 	return oldValue.OperatorID, nil
 }
 
-// AddOperatorID adds i to the "operator_id" field.
-func (m *LedgerEntryMutation) AddOperatorID(i int64) {
-	if m.addoperator_id != nil {
-		*m.addoperator_id += i
-	} else {
-		m.addoperator_id = &i
-	}
-}
-
-// AddedOperatorID returns the value that was added to the "operator_id" field in this mutation.
-func (m *LedgerEntryMutation) AddedOperatorID() (r int64, exists bool) {
-	v := m.addoperator_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
 // ResetOperatorID resets all changes to the "operator_id" field.
 func (m *LedgerEntryMutation) ResetOperatorID() {
-	m.operator_id = nil
-	m.addoperator_id = nil
+	m.operator = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -4106,6 +4086,33 @@ func (m *LedgerEntryMutation) CardIDs() (ids []int64) {
 func (m *LedgerEntryMutation) ResetCard() {
 	m.card = nil
 	m.clearedcard = false
+}
+
+// ClearOperator clears the "operator" edge to the User entity.
+func (m *LedgerEntryMutation) ClearOperator() {
+	m.clearedoperator = true
+	m.clearedFields[ledgerentry.FieldOperatorID] = struct{}{}
+}
+
+// OperatorCleared reports if the "operator" edge to the User entity was cleared.
+func (m *LedgerEntryMutation) OperatorCleared() bool {
+	return m.clearedoperator
+}
+
+// OperatorIDs returns the "operator" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OperatorID instead. It exists only for internal usage by the builders.
+func (m *LedgerEntryMutation) OperatorIDs() (ids []int64) {
+	if id := m.operator; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetOperator resets all changes to the "operator" edge.
+func (m *LedgerEntryMutation) ResetOperator() {
+	m.operator = nil
+	m.clearedoperator = false
 }
 
 // AddItemIDs adds the "items" edge to the LedgerEntryItem entity by ids.
@@ -4230,7 +4237,7 @@ func (m *LedgerEntryMutation) Fields() []string {
 	if m.remark != nil {
 		fields = append(fields, ledgerentry.FieldRemark)
 	}
-	if m.operator_id != nil {
+	if m.operator != nil {
 		fields = append(fields, ledgerentry.FieldOperatorID)
 	}
 	if m.created_at != nil {
@@ -4428,9 +4435,6 @@ func (m *LedgerEntryMutation) AddedFields() []string {
 	if m.addtimes_after != nil {
 		fields = append(fields, ledgerentry.FieldTimesAfter)
 	}
-	if m.addoperator_id != nil {
-		fields = append(fields, ledgerentry.FieldOperatorID)
-	}
 	return fields
 }
 
@@ -4449,8 +4453,6 @@ func (m *LedgerEntryMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedBalanceAfter()
 	case ledgerentry.FieldTimesAfter:
 		return m.AddedTimesAfter()
-	case ledgerentry.FieldOperatorID:
-		return m.AddedOperatorID()
 	}
 	return nil, false
 }
@@ -4494,13 +4496,6 @@ func (m *LedgerEntryMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddTimesAfter(v)
-		return nil
-	case ledgerentry.FieldOperatorID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddOperatorID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown LedgerEntry numeric field %s", name)
@@ -4613,12 +4608,15 @@ func (m *LedgerEntryMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LedgerEntryMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.member != nil {
 		edges = append(edges, ledgerentry.EdgeMember)
 	}
 	if m.card != nil {
 		edges = append(edges, ledgerentry.EdgeCard)
+	}
+	if m.operator != nil {
+		edges = append(edges, ledgerentry.EdgeOperator)
 	}
 	if m.items != nil {
 		edges = append(edges, ledgerentry.EdgeItems)
@@ -4638,6 +4636,10 @@ func (m *LedgerEntryMutation) AddedIDs(name string) []ent.Value {
 		if id := m.card; id != nil {
 			return []ent.Value{*id}
 		}
+	case ledgerentry.EdgeOperator:
+		if id := m.operator; id != nil {
+			return []ent.Value{*id}
+		}
 	case ledgerentry.EdgeItems:
 		ids := make([]ent.Value, 0, len(m.items))
 		for id := range m.items {
@@ -4650,7 +4652,7 @@ func (m *LedgerEntryMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LedgerEntryMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removeditems != nil {
 		edges = append(edges, ledgerentry.EdgeItems)
 	}
@@ -4673,12 +4675,15 @@ func (m *LedgerEntryMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LedgerEntryMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedmember {
 		edges = append(edges, ledgerentry.EdgeMember)
 	}
 	if m.clearedcard {
 		edges = append(edges, ledgerentry.EdgeCard)
+	}
+	if m.clearedoperator {
+		edges = append(edges, ledgerentry.EdgeOperator)
 	}
 	if m.cleareditems {
 		edges = append(edges, ledgerentry.EdgeItems)
@@ -4694,6 +4699,8 @@ func (m *LedgerEntryMutation) EdgeCleared(name string) bool {
 		return m.clearedmember
 	case ledgerentry.EdgeCard:
 		return m.clearedcard
+	case ledgerentry.EdgeOperator:
+		return m.clearedoperator
 	case ledgerentry.EdgeItems:
 		return m.cleareditems
 	}
@@ -4710,6 +4717,9 @@ func (m *LedgerEntryMutation) ClearEdge(name string) error {
 	case ledgerentry.EdgeCard:
 		m.ClearCard()
 		return nil
+	case ledgerentry.EdgeOperator:
+		m.ClearOperator()
+		return nil
 	}
 	return fmt.Errorf("unknown LedgerEntry unique edge %s", name)
 }
@@ -4723,6 +4733,9 @@ func (m *LedgerEntryMutation) ResetEdge(name string) error {
 		return nil
 	case ledgerentry.EdgeCard:
 		m.ResetCard()
+		return nil
+	case ledgerentry.EdgeOperator:
+		m.ResetOperator()
 		return nil
 	case ledgerentry.EdgeItems:
 		m.ResetItems()
@@ -12903,19 +12916,22 @@ func (m *StoreNotifySettingMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int64
-	phone         *string
-	nickname      *string
-	status        *int8
-	addstatus     *int8
-	created_at    *time.Time
-	updated_at    *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*User, error)
-	predicates    []predicate.User
+	op                      Op
+	typ                     string
+	id                      *int64
+	phone                   *string
+	nickname                *string
+	status                  *int8
+	addstatus               *int8
+	created_at              *time.Time
+	updated_at              *time.Time
+	clearedFields           map[string]struct{}
+	operated_ledgers        map[int64]struct{}
+	removedoperated_ledgers map[int64]struct{}
+	clearedoperated_ledgers bool
+	done                    bool
+	oldValue                func(context.Context) (*User, error)
+	predicates              []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -13222,6 +13238,60 @@ func (m *UserMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// AddOperatedLedgerIDs adds the "operated_ledgers" edge to the LedgerEntry entity by ids.
+func (m *UserMutation) AddOperatedLedgerIDs(ids ...int64) {
+	if m.operated_ledgers == nil {
+		m.operated_ledgers = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.operated_ledgers[ids[i]] = struct{}{}
+	}
+}
+
+// ClearOperatedLedgers clears the "operated_ledgers" edge to the LedgerEntry entity.
+func (m *UserMutation) ClearOperatedLedgers() {
+	m.clearedoperated_ledgers = true
+}
+
+// OperatedLedgersCleared reports if the "operated_ledgers" edge to the LedgerEntry entity was cleared.
+func (m *UserMutation) OperatedLedgersCleared() bool {
+	return m.clearedoperated_ledgers
+}
+
+// RemoveOperatedLedgerIDs removes the "operated_ledgers" edge to the LedgerEntry entity by IDs.
+func (m *UserMutation) RemoveOperatedLedgerIDs(ids ...int64) {
+	if m.removedoperated_ledgers == nil {
+		m.removedoperated_ledgers = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.operated_ledgers, ids[i])
+		m.removedoperated_ledgers[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedOperatedLedgers returns the removed IDs of the "operated_ledgers" edge to the LedgerEntry entity.
+func (m *UserMutation) RemovedOperatedLedgersIDs() (ids []int64) {
+	for id := range m.removedoperated_ledgers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// OperatedLedgersIDs returns the "operated_ledgers" edge IDs in the mutation.
+func (m *UserMutation) OperatedLedgersIDs() (ids []int64) {
+	for id := range m.operated_ledgers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetOperatedLedgers resets all changes to the "operated_ledgers" edge.
+func (m *UserMutation) ResetOperatedLedgers() {
+	m.operated_ledgers = nil
+	m.clearedoperated_ledgers = false
+	m.removedoperated_ledgers = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -13438,48 +13508,84 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.operated_ledgers != nil {
+		edges = append(edges, user.EdgeOperatedLedgers)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *UserMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case user.EdgeOperatedLedgers:
+		ids := make([]ent.Value, 0, len(m.operated_ledgers))
+		for id := range m.operated_ledgers {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedoperated_ledgers != nil {
+		edges = append(edges, user.EdgeOperatedLedgers)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *UserMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case user.EdgeOperatedLedgers:
+		ids := make([]ent.Value, 0, len(m.removedoperated_ledgers))
+		for id := range m.removedoperated_ledgers {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedoperated_ledgers {
+		edges = append(edges, user.EdgeOperatedLedgers)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *UserMutation) EdgeCleared(name string) bool {
+	switch name {
+	case user.EdgeOperatedLedgers:
+		return m.clearedoperated_ledgers
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *UserMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown User unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *UserMutation) ResetEdge(name string) error {
+	switch name {
+	case user.EdgeOperatedLedgers:
+		m.ResetOperatedLedgers()
+		return nil
+	}
 	return fmt.Errorf("unknown User edge %s", name)
 }

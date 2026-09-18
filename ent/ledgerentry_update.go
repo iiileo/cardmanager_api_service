@@ -8,6 +8,7 @@ import (
 	"card_manager/api_service/ent/member"
 	"card_manager/api_service/ent/membercard"
 	"card_manager/api_service/ent/predicate"
+	"card_manager/api_service/ent/user"
 	"context"
 	"errors"
 	"fmt"
@@ -257,7 +258,6 @@ func (_u *LedgerEntryUpdate) ClearRemark() *LedgerEntryUpdate {
 
 // SetOperatorID sets the "operator_id" field.
 func (_u *LedgerEntryUpdate) SetOperatorID(v int64) *LedgerEntryUpdate {
-	_u.mutation.ResetOperatorID()
 	_u.mutation.SetOperatorID(v)
 	return _u
 }
@@ -270,12 +270,6 @@ func (_u *LedgerEntryUpdate) SetNillableOperatorID(v *int64) *LedgerEntryUpdate 
 	return _u
 }
 
-// AddOperatorID adds value to the "operator_id" field.
-func (_u *LedgerEntryUpdate) AddOperatorID(v int64) *LedgerEntryUpdate {
-	_u.mutation.AddOperatorID(v)
-	return _u
-}
-
 // SetMember sets the "member" edge to the Member entity.
 func (_u *LedgerEntryUpdate) SetMember(v *Member) *LedgerEntryUpdate {
 	return _u.SetMemberID(v.ID)
@@ -284,6 +278,11 @@ func (_u *LedgerEntryUpdate) SetMember(v *Member) *LedgerEntryUpdate {
 // SetCard sets the "card" edge to the MemberCard entity.
 func (_u *LedgerEntryUpdate) SetCard(v *MemberCard) *LedgerEntryUpdate {
 	return _u.SetCardID(v.ID)
+}
+
+// SetOperator sets the "operator" edge to the User entity.
+func (_u *LedgerEntryUpdate) SetOperator(v *User) *LedgerEntryUpdate {
+	return _u.SetOperatorID(v.ID)
 }
 
 // AddItemIDs adds the "items" edge to the LedgerEntryItem entity by IDs.
@@ -315,6 +314,12 @@ func (_u *LedgerEntryUpdate) ClearMember() *LedgerEntryUpdate {
 // ClearCard clears the "card" edge to the MemberCard entity.
 func (_u *LedgerEntryUpdate) ClearCard() *LedgerEntryUpdate {
 	_u.mutation.ClearCard()
+	return _u
+}
+
+// ClearOperator clears the "operator" edge to the User entity.
+func (_u *LedgerEntryUpdate) ClearOperator() *LedgerEntryUpdate {
+	_u.mutation.ClearOperator()
 	return _u
 }
 
@@ -394,6 +399,9 @@ func (_u *LedgerEntryUpdate) check() error {
 	if _u.mutation.CardCleared() && len(_u.mutation.CardIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "LedgerEntry.card"`)
 	}
+	if _u.mutation.OperatorCleared() && len(_u.mutation.OperatorIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "LedgerEntry.operator"`)
+	}
 	return nil
 }
 
@@ -469,12 +477,6 @@ func (_u *LedgerEntryUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if _u.mutation.RemarkCleared() {
 		_spec.ClearField(ledgerentry.FieldRemark, field.TypeString)
 	}
-	if value, ok := _u.mutation.OperatorID(); ok {
-		_spec.SetField(ledgerentry.FieldOperatorID, field.TypeInt64, value)
-	}
-	if value, ok := _u.mutation.AddedOperatorID(); ok {
-		_spec.AddField(ledgerentry.FieldOperatorID, field.TypeInt64, value)
-	}
 	if _u.mutation.MemberCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -526,6 +528,35 @@ func (_u *LedgerEntryUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(membercard.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.OperatorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   ledgerentry.OperatorTable,
+			Columns: []string{ledgerentry.OperatorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OperatorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   ledgerentry.OperatorTable,
+			Columns: []string{ledgerentry.OperatorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -825,7 +856,6 @@ func (_u *LedgerEntryUpdateOne) ClearRemark() *LedgerEntryUpdateOne {
 
 // SetOperatorID sets the "operator_id" field.
 func (_u *LedgerEntryUpdateOne) SetOperatorID(v int64) *LedgerEntryUpdateOne {
-	_u.mutation.ResetOperatorID()
 	_u.mutation.SetOperatorID(v)
 	return _u
 }
@@ -838,12 +868,6 @@ func (_u *LedgerEntryUpdateOne) SetNillableOperatorID(v *int64) *LedgerEntryUpda
 	return _u
 }
 
-// AddOperatorID adds value to the "operator_id" field.
-func (_u *LedgerEntryUpdateOne) AddOperatorID(v int64) *LedgerEntryUpdateOne {
-	_u.mutation.AddOperatorID(v)
-	return _u
-}
-
 // SetMember sets the "member" edge to the Member entity.
 func (_u *LedgerEntryUpdateOne) SetMember(v *Member) *LedgerEntryUpdateOne {
 	return _u.SetMemberID(v.ID)
@@ -852,6 +876,11 @@ func (_u *LedgerEntryUpdateOne) SetMember(v *Member) *LedgerEntryUpdateOne {
 // SetCard sets the "card" edge to the MemberCard entity.
 func (_u *LedgerEntryUpdateOne) SetCard(v *MemberCard) *LedgerEntryUpdateOne {
 	return _u.SetCardID(v.ID)
+}
+
+// SetOperator sets the "operator" edge to the User entity.
+func (_u *LedgerEntryUpdateOne) SetOperator(v *User) *LedgerEntryUpdateOne {
+	return _u.SetOperatorID(v.ID)
 }
 
 // AddItemIDs adds the "items" edge to the LedgerEntryItem entity by IDs.
@@ -883,6 +912,12 @@ func (_u *LedgerEntryUpdateOne) ClearMember() *LedgerEntryUpdateOne {
 // ClearCard clears the "card" edge to the MemberCard entity.
 func (_u *LedgerEntryUpdateOne) ClearCard() *LedgerEntryUpdateOne {
 	_u.mutation.ClearCard()
+	return _u
+}
+
+// ClearOperator clears the "operator" edge to the User entity.
+func (_u *LedgerEntryUpdateOne) ClearOperator() *LedgerEntryUpdateOne {
+	_u.mutation.ClearOperator()
 	return _u
 }
 
@@ -974,6 +1009,9 @@ func (_u *LedgerEntryUpdateOne) check() error {
 	}
 	if _u.mutation.CardCleared() && len(_u.mutation.CardIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "LedgerEntry.card"`)
+	}
+	if _u.mutation.OperatorCleared() && len(_u.mutation.OperatorIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "LedgerEntry.operator"`)
 	}
 	return nil
 }
@@ -1067,12 +1105,6 @@ func (_u *LedgerEntryUpdateOne) sqlSave(ctx context.Context) (_node *LedgerEntry
 	if _u.mutation.RemarkCleared() {
 		_spec.ClearField(ledgerentry.FieldRemark, field.TypeString)
 	}
-	if value, ok := _u.mutation.OperatorID(); ok {
-		_spec.SetField(ledgerentry.FieldOperatorID, field.TypeInt64, value)
-	}
-	if value, ok := _u.mutation.AddedOperatorID(); ok {
-		_spec.AddField(ledgerentry.FieldOperatorID, field.TypeInt64, value)
-	}
 	if _u.mutation.MemberCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1124,6 +1156,35 @@ func (_u *LedgerEntryUpdateOne) sqlSave(ctx context.Context) (_node *LedgerEntry
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(membercard.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.OperatorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   ledgerentry.OperatorTable,
+			Columns: []string{ledgerentry.OperatorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OperatorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   ledgerentry.OperatorTable,
+			Columns: []string{ledgerentry.OperatorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

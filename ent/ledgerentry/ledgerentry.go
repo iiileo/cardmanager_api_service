@@ -44,6 +44,8 @@ const (
 	EdgeMember = "member"
 	// EdgeCard holds the string denoting the card edge name in mutations.
 	EdgeCard = "card"
+	// EdgeOperator holds the string denoting the operator edge name in mutations.
+	EdgeOperator = "operator"
 	// EdgeItems holds the string denoting the items edge name in mutations.
 	EdgeItems = "items"
 	// Table holds the table name of the ledgerentry in the database.
@@ -62,6 +64,13 @@ const (
 	CardInverseTable = "member_cards"
 	// CardColumn is the table column denoting the card relation/edge.
 	CardColumn = "card_id"
+	// OperatorTable is the table that holds the operator relation/edge.
+	OperatorTable = "ledger_entries"
+	// OperatorInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	OperatorInverseTable = "users"
+	// OperatorColumn is the table column denoting the operator relation/edge.
+	OperatorColumn = "operator_id"
 	// ItemsTable is the table that holds the items relation/edge.
 	ItemsTable = "ledger_entry_items"
 	// ItemsInverseTable is the table name for the LedgerEntryItem entity.
@@ -201,6 +210,13 @@ func ByCardField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// ByOperatorField orders the results by operator field.
+func ByOperatorField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOperatorStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByItemsCount orders the results by items count.
 func ByItemsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -226,6 +242,13 @@ func newCardStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CardInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, CardTable, CardColumn),
+	)
+}
+func newOperatorStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OperatorInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, OperatorTable, OperatorColumn),
 	)
 }
 func newItemsStep() *sqlgraph.Step {

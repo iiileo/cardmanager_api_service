@@ -8,6 +8,7 @@ import (
 	"card_manager/api_service/ent/member"
 	"card_manager/api_service/ent/membercard"
 	"card_manager/api_service/ent/predicate"
+	"card_manager/api_service/ent/user"
 	"context"
 	"database/sql/driver"
 	"fmt"
@@ -22,13 +23,14 @@ import (
 // LedgerEntryQuery is the builder for querying LedgerEntry entities.
 type LedgerEntryQuery struct {
 	config
-	ctx        *QueryContext
-	order      []ledgerentry.OrderOption
-	inters     []Interceptor
-	predicates []predicate.LedgerEntry
-	withMember *MemberQuery
-	withCard   *MemberCardQuery
-	withItems  *LedgerEntryItemQuery
+	ctx          *QueryContext
+	order        []ledgerentry.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.LedgerEntry
+	withMember   *MemberQuery
+	withCard     *MemberCardQuery
+	withOperator *UserQuery
+	withItems    *LedgerEntryItemQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -102,6 +104,28 @@ func (_q *LedgerEntryQuery) QueryCard() *MemberCardQuery {
 			sqlgraph.From(ledgerentry.Table, ledgerentry.FieldID, selector),
 			sqlgraph.To(membercard.Table, membercard.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, ledgerentry.CardTable, ledgerentry.CardColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryOperator chains the current query on the "operator" edge.
+func (_q *LedgerEntryQuery) QueryOperator() *UserQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ledgerentry.Table, ledgerentry.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ledgerentry.OperatorTable, ledgerentry.OperatorColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -318,14 +342,15 @@ func (_q *LedgerEntryQuery) Clone() *LedgerEntryQuery {
 		return nil
 	}
 	return &LedgerEntryQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]ledgerentry.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.LedgerEntry{}, _q.predicates...),
-		withMember: _q.withMember.Clone(),
-		withCard:   _q.withCard.Clone(),
-		withItems:  _q.withItems.Clone(),
+		config:       _q.config,
+		ctx:          _q.ctx.Clone(),
+		order:        append([]ledgerentry.OrderOption{}, _q.order...),
+		inters:       append([]Interceptor{}, _q.inters...),
+		predicates:   append([]predicate.LedgerEntry{}, _q.predicates...),
+		withMember:   _q.withMember.Clone(),
+		withCard:     _q.withCard.Clone(),
+		withOperator: _q.withOperator.Clone(),
+		withItems:    _q.withItems.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -351,6 +376,17 @@ func (_q *LedgerEntryQuery) WithCard(opts ...func(*MemberCardQuery)) *LedgerEntr
 		opt(query)
 	}
 	_q.withCard = query
+	return _q
+}
+
+// WithOperator tells the query-builder to eager-load the nodes that are connected to
+// the "operator" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LedgerEntryQuery) WithOperator(opts ...func(*UserQuery)) *LedgerEntryQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withOperator = query
 	return _q
 }
 
@@ -443,9 +479,10 @@ func (_q *LedgerEntryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	var (
 		nodes       = []*LedgerEntry{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			_q.withMember != nil,
 			_q.withCard != nil,
+			_q.withOperator != nil,
 			_q.withItems != nil,
 		}
 	)
@@ -476,6 +513,12 @@ func (_q *LedgerEntryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if query := _q.withCard; query != nil {
 		if err := _q.loadCard(ctx, query, nodes, nil,
 			func(n *LedgerEntry, e *MemberCard) { n.Edges.Card = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withOperator; query != nil {
+		if err := _q.loadOperator(ctx, query, nodes, nil,
+			func(n *LedgerEntry, e *User) { n.Edges.Operator = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -547,6 +590,35 @@ func (_q *LedgerEntryQuery) loadCard(ctx context.Context, query *MemberCardQuery
 	}
 	return nil
 }
+func (_q *LedgerEntryQuery) loadOperator(ctx context.Context, query *UserQuery, nodes []*LedgerEntry, init func(*LedgerEntry), assign func(*LedgerEntry, *User)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*LedgerEntry)
+	for i := range nodes {
+		fk := nodes[i].OperatorID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "operator_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (_q *LedgerEntryQuery) loadItems(ctx context.Context, query *LedgerEntryItemQuery, nodes []*LedgerEntry, init func(*LedgerEntry), assign func(*LedgerEntry, *LedgerEntryItem)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int64]*LedgerEntry)
@@ -608,6 +680,9 @@ func (_q *LedgerEntryQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if _q.withCard != nil {
 			_spec.Node.AddColumnOnce(ledgerentry.FieldCardID)
+		}
+		if _q.withOperator != nil {
+			_spec.Node.AddColumnOnce(ledgerentry.FieldOperatorID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

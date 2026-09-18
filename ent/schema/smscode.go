@@ -34,7 +34,9 @@ func (SmsCode) Fields() []ent.Field {
 
 func (SmsCode) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("phone", "scene"),
+		// 登录校验：phone + scene + ORDER BY created_at DESC LIMIT 1
+		index.Fields("phone", "scene", "created_at"),
+		// 便于按过期时间清理历史验证码
 		index.Fields("expires_at"),
 	}
 }

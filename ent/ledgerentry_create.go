@@ -7,6 +7,7 @@ import (
 	"card_manager/api_service/ent/ledgerentryitem"
 	"card_manager/api_service/ent/member"
 	"card_manager/api_service/ent/membercard"
+	"card_manager/api_service/ent/user"
 	"context"
 	"errors"
 	"fmt"
@@ -181,6 +182,11 @@ func (_c *LedgerEntryCreate) SetCard(v *MemberCard) *LedgerEntryCreate {
 	return _c.SetCardID(v.ID)
 }
 
+// SetOperator sets the "operator" edge to the User entity.
+func (_c *LedgerEntryCreate) SetOperator(v *User) *LedgerEntryCreate {
+	return _c.SetOperatorID(v.ID)
+}
+
 // AddItemIDs adds the "items" edge to the LedgerEntryItem entity by IDs.
 func (_c *LedgerEntryCreate) AddItemIDs(ids ...int64) *LedgerEntryCreate {
 	_c.mutation.AddItemIDs(ids...)
@@ -290,6 +296,9 @@ func (_c *LedgerEntryCreate) check() error {
 	if len(_c.mutation.CardIDs()) == 0 {
 		return &ValidationError{Name: "card", err: errors.New(`ent: missing required edge "LedgerEntry.card"`)}
 	}
+	if len(_c.mutation.OperatorIDs()) == 0 {
+		return &ValidationError{Name: "operator", err: errors.New(`ent: missing required edge "LedgerEntry.operator"`)}
+	}
 	return nil
 }
 
@@ -358,10 +367,6 @@ func (_c *LedgerEntryCreate) createSpec() (*LedgerEntry, *sqlgraph.CreateSpec) {
 		_spec.SetField(ledgerentry.FieldRemark, field.TypeString, value)
 		_node.Remark = &value
 	}
-	if value, ok := _c.mutation.OperatorID(); ok {
-		_spec.SetField(ledgerentry.FieldOperatorID, field.TypeInt64, value)
-		_node.OperatorID = value
-	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(ledgerentry.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -398,6 +403,23 @@ func (_c *LedgerEntryCreate) createSpec() (*LedgerEntry, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.CardID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.OperatorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   ledgerentry.OperatorTable,
+			Columns: []string{ledgerentry.OperatorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.OperatorID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.ItemsIDs(); len(nodes) > 0 {

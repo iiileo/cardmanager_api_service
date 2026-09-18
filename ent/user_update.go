@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"card_manager/api_service/ent/ledgerentry"
 	"card_manager/api_service/ent/predicate"
 	"card_manager/api_service/ent/user"
 	"context"
@@ -83,9 +84,45 @@ func (_u *UserUpdate) SetUpdatedAt(v time.Time) *UserUpdate {
 	return _u
 }
 
+// AddOperatedLedgerIDs adds the "operated_ledgers" edge to the LedgerEntry entity by IDs.
+func (_u *UserUpdate) AddOperatedLedgerIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddOperatedLedgerIDs(ids...)
+	return _u
+}
+
+// AddOperatedLedgers adds the "operated_ledgers" edges to the LedgerEntry entity.
+func (_u *UserUpdate) AddOperatedLedgers(v ...*LedgerEntry) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddOperatedLedgerIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
+}
+
+// ClearOperatedLedgers clears all "operated_ledgers" edges to the LedgerEntry entity.
+func (_u *UserUpdate) ClearOperatedLedgers() *UserUpdate {
+	_u.mutation.ClearOperatedLedgers()
+	return _u
+}
+
+// RemoveOperatedLedgerIDs removes the "operated_ledgers" edge to LedgerEntry entities by IDs.
+func (_u *UserUpdate) RemoveOperatedLedgerIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveOperatedLedgerIDs(ids...)
+	return _u
+}
+
+// RemoveOperatedLedgers removes "operated_ledgers" edges to LedgerEntry entities.
+func (_u *UserUpdate) RemoveOperatedLedgers(v ...*LedgerEntry) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveOperatedLedgerIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -166,6 +203,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if _u.mutation.OperatedLedgersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OperatedLedgersTable,
+			Columns: []string{user.OperatedLedgersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedOperatedLedgersIDs(); len(nodes) > 0 && !_u.mutation.OperatedLedgersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OperatedLedgersTable,
+			Columns: []string{user.OperatedLedgersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OperatedLedgersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OperatedLedgersTable,
+			Columns: []string{user.OperatedLedgersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -241,9 +323,45 @@ func (_u *UserUpdateOne) SetUpdatedAt(v time.Time) *UserUpdateOne {
 	return _u
 }
 
+// AddOperatedLedgerIDs adds the "operated_ledgers" edge to the LedgerEntry entity by IDs.
+func (_u *UserUpdateOne) AddOperatedLedgerIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddOperatedLedgerIDs(ids...)
+	return _u
+}
+
+// AddOperatedLedgers adds the "operated_ledgers" edges to the LedgerEntry entity.
+func (_u *UserUpdateOne) AddOperatedLedgers(v ...*LedgerEntry) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddOperatedLedgerIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
+}
+
+// ClearOperatedLedgers clears all "operated_ledgers" edges to the LedgerEntry entity.
+func (_u *UserUpdateOne) ClearOperatedLedgers() *UserUpdateOne {
+	_u.mutation.ClearOperatedLedgers()
+	return _u
+}
+
+// RemoveOperatedLedgerIDs removes the "operated_ledgers" edge to LedgerEntry entities by IDs.
+func (_u *UserUpdateOne) RemoveOperatedLedgerIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveOperatedLedgerIDs(ids...)
+	return _u
+}
+
+// RemoveOperatedLedgers removes "operated_ledgers" edges to LedgerEntry entities.
+func (_u *UserUpdateOne) RemoveOperatedLedgers(v ...*LedgerEntry) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveOperatedLedgerIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -353,6 +471,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.OperatedLedgersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OperatedLedgersTable,
+			Columns: []string{user.OperatedLedgersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedOperatedLedgersIDs(); len(nodes) > 0 && !_u.mutation.OperatedLedgersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OperatedLedgersTable,
+			Columns: []string{user.OperatedLedgersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OperatedLedgersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OperatedLedgersTable,
+			Columns: []string{user.OperatedLedgersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &User{config: _u.config}
 	_spec.Assign = _node.assignValues

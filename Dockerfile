@@ -17,8 +17,7 @@ ENV TZ=Asia/Shanghai
 
 WORKDIR /app
 COPY --from=builder /out/server ./server
-# Docker 默认配置；本地开发仍用 internal/config/config.yaml
-COPY internal/config/config.docker.yaml ./internal/config/config.yaml
+COPY internal/config/config.yaml ./internal/config/config.yaml
 
 EXPOSE 8080
 CMD ["./server"]

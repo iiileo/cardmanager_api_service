@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -23,8 +24,17 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeOperatedLedgers holds the string denoting the operated_ledgers edge name in mutations.
+	EdgeOperatedLedgers = "operated_ledgers"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// OperatedLedgersTable is the table that holds the operated_ledgers relation/edge.
+	OperatedLedgersTable = "ledger_entries"
+	// OperatedLedgersInverseTable is the table name for the LedgerEntry entity.
+	// It exists in this package in order to avoid circular dependency with the "ledgerentry" package.
+	OperatedLedgersInverseTable = "ledger_entries"
+	// OperatedLedgersColumn is the table column denoting the operated_ledgers relation/edge.
+	OperatedLedgersColumn = "operator_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -95,4 +105,25 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByOperatedLedgersCount orders the results by operated_ledgers count.
+func ByOperatedLedgersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newOperatedLedgersStep(), opts...)
+	}
+}
+
+// ByOperatedLedgers orders the results by operated_ledgers terms.
+func ByOperatedLedgers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOperatedLedgersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newOperatedLedgersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OperatedLedgersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, OperatedLedgersTable, OperatedLedgersColumn),
+	)
 }

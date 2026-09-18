@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"card_manager/api_service/ent/ledgerentry"
 	"card_manager/api_service/ent/user"
 	"context"
 	"errors"
@@ -86,6 +87,21 @@ func (_c *UserCreate) SetNillableUpdatedAt(v *time.Time) *UserCreate {
 func (_c *UserCreate) SetID(v int64) *UserCreate {
 	_c.mutation.SetID(v)
 	return _c
+}
+
+// AddOperatedLedgerIDs adds the "operated_ledgers" edge to the LedgerEntry entity by IDs.
+func (_c *UserCreate) AddOperatedLedgerIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddOperatedLedgerIDs(ids...)
+	return _c
+}
+
+// AddOperatedLedgers adds the "operated_ledgers" edges to the LedgerEntry entity.
+func (_c *UserCreate) AddOperatedLedgers(v ...*LedgerEntry) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddOperatedLedgerIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -219,6 +235,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.OperatedLedgersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OperatedLedgersTable,
+			Columns: []string{user.OperatedLedgersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

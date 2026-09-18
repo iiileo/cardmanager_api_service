@@ -6,16 +6,18 @@
 #
 # ┌─────────────────────────────────────────────────────────────────┐
 # │ 配置优先级（高 → 低）                                            │
-# │  1. 环境变量 CARDMANAGER_*（见 app.environment 注释）           │
+# │  1. 环境变量 CM_*（由下方 environment / .env 注入）     │
 # │  2. 挂载 config.yaml（取消 app.volumes 注释）                   │
-# │  3. 镜像内 internal/config/config.docker.yaml                   │
+# │  3. 镜像内 internal/config/config.yaml                          │
 # └─────────────────────────────────────────────────────────────────┘
 #
-# 环境变量命名：前缀 CARDMANAGER_ + 配置路径大写，点改下划线
-#   postgres.host     → CARDMANAGER_POSTGRES_HOST
-#   postgres.password → CARDMANAGER_POSTGRES_PASSWORD
-#   auth.jwt_secret   → CARDMANAGER_AUTH_JWT_SECRET
-# 完整字段见 internal/config/config.go 与 .env.example
+# .env 仅服务 compose 短名插值（见 .env.example）。
+# 本地 go run 请直接改 internal/config/config.yaml。
+#
+# 环境变量命名：前缀 CM_ + 配置路径大写，点改下划线
+#   postgres.host     → CM_POSTGRES_HOST
+#   auth.jwt_secret   → CM_AUTH_JWT_SECRET
+# 完整字段见 internal/config/config.go；compose 可用短名见 .env.example
 
 name: card-manager
 
@@ -37,29 +39,29 @@ services:
       # 连宿主机数据库：host.docker.internal
       # 连局域网数据库：填 IP，如 192.168.0.2
       # 连云数据库：填域名，sslmode 改为 require
-      CARDMANAGER_POSTGRES_HOST: ${POSTGRES_HOST:-host.docker.internal}
-      CARDMANAGER_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      CARDMANAGER_POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      CARDMANAGER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      CARDMANAGER_POSTGRES_DBNAME: ${POSTGRES_DB:-card_manager}
-      CARDMANAGER_POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-disable}
+      CM_POSTGRES_HOST: ${POSTGRES_HOST:-host.docker.internal}
+      CM_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      CM_POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      CM_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      CM_POSTGRES_DBNAME: ${POSTGRES_DB:-card_manager}
+      CM_POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-disable}
 
       # --- 服务 / 日志 ---
-      CARDMANAGER_SERVER_ADDRESS: ":8080"
-      CARDMANAGER_SERVER_MODE: ${SERVER_MODE:-local}
-      CARDMANAGER_LOGGING_LEVEL: ${LOG_LEVEL:-info}
+      CM_SERVER_ADDRESS: ":8080"
+      CM_SERVER_MODE: ${SERVER_MODE:-local}
+      CM_LOGGING_LEVEL: ${LOG_LEVEL:-info}
 
       # --- 认证 / 短信（生产请改 JWT 并关闭 dev 模式）---
-      CARDMANAGER_AUTH_JWT_SECRET: ${JWT_SECRET:-card-manager-docker-dev-secret-change-me}
-      CARDMANAGER_AUTH_ACCESS_TTL_SECONDS: ${ACCESS_TTL_SECONDS:-7200}
-      CARDMANAGER_AUTH_REFRESH_TTL_SECONDS: ${REFRESH_TTL_SECONDS:-2592000}
-      CARDMANAGER_AUTH_SMS_CODE_TTL_SECONDS: ${SMS_CODE_TTL_SECONDS:-300}
-      CARDMANAGER_AUTH_SMS_DEV_MODE: ${SMS_DEV_MODE:-true}
-      CARDMANAGER_AUTH_SMS_DEV_CODE: ${SMS_DEV_CODE:-123456}
-      CARDMANAGER_AUTH_SMS_PROVIDER: ${SMS_PROVIDER:-dev}
-      CARDMANAGER_AUTH_SMS_SPUG_TEMPLATE_CODE: ${SMS_SPUG_TEMPLATE_CODE:-}
-      CARDMANAGER_AUTH_SMS_SPUG_WITH_TTL: ${SMS_SPUG_WITH_TTL:-true}
+      CM_AUTH_JWT_SECRET: ${JWT_SECRET:-card-manager-docker-dev-secret-change-me}
+      CM_AUTH_ACCESS_TTL_SECONDS: ${ACCESS_TTL_SECONDS:-7200}
+      CM_AUTH_REFRESH_TTL_SECONDS: ${REFRESH_TTL_SECONDS:-2592000}
+      CM_AUTH_SMS_CODE_TTL_SECONDS: ${SMS_CODE_TTL_SECONDS:-300}
+      CM_AUTH_SMS_DEV_MODE: ${SMS_DEV_MODE:-true}
+      CM_AUTH_SMS_DEV_CODE: ${SMS_DEV_CODE:-123456}
+      CM_AUTH_SMS_PROVIDER: ${SMS_PROVIDER:-dev}
+      CM_AUTH_SMS_SPUG_TEMPLATE_CODE: ${SMS_SPUG_TEMPLATE_CODE:-}
+      CM_AUTH_SMS_SPUG_WITH_TTL: ${SMS_SPUG_WITH_TTL:-true}
 
     # 更习惯改 YAML 时，可挂载本地配置覆盖镜像默认值：
     # volumes:
-    #   - ./internal/config/config.docker.yaml:/app/internal/config/config.yaml:ro
+    #   - ./internal/config/config.yaml:/app/internal/config/config.yaml:ro

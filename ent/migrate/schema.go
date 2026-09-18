@@ -147,10 +147,10 @@ var (
 		{Name: "balance_after", Type: field.TypeInt, Nullable: true},
 		{Name: "times_after", Type: field.TypeInt, Nullable: true},
 		{Name: "remark", Type: field.TypeString, Nullable: true, Size: 128},
-		{Name: "operator_id", Type: field.TypeInt64},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "member_id", Type: field.TypeInt64},
 		{Name: "card_id", Type: field.TypeInt64},
+		{Name: "operator_id", Type: field.TypeInt64},
 	}
 	// LedgerEntriesTable holds the schema information for the "ledger_entries" table.
 	LedgerEntriesTable = &schema.Table{
@@ -160,14 +160,20 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "ledger_entries_members_ledgers",
-				Columns:    []*schema.Column{LedgerEntriesColumns[12]},
+				Columns:    []*schema.Column{LedgerEntriesColumns[11]},
 				RefColumns: []*schema.Column{MembersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "ledger_entries_member_cards_ledgers",
-				Columns:    []*schema.Column{LedgerEntriesColumns[13]},
+				Columns:    []*schema.Column{LedgerEntriesColumns[12]},
 				RefColumns: []*schema.Column{MemberCardsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "ledger_entries_users_operated_ledgers",
+				Columns:    []*schema.Column{LedgerEntriesColumns[13]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
@@ -175,22 +181,22 @@ var (
 			{
 				Name:    "ledgerentry_store_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[11]},
+				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[10]},
 			},
 			{
 				Name:    "ledgerentry_member_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LedgerEntriesColumns[12], LedgerEntriesColumns[11]},
+				Columns: []*schema.Column{LedgerEntriesColumns[11], LedgerEntriesColumns[10]},
 			},
 			{
 				Name:    "ledgerentry_operator_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LedgerEntriesColumns[10], LedgerEntriesColumns[11]},
+				Columns: []*schema.Column{LedgerEntriesColumns[13], LedgerEntriesColumns[10]},
 			},
 			{
 				Name:    "ledgerentry_card_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LedgerEntriesColumns[13], LedgerEntriesColumns[11]},
+				Columns: []*schema.Column{LedgerEntriesColumns[12], LedgerEntriesColumns[10]},
 			},
 			{
 				Name:    "ledgerentry_store_id_type",
@@ -200,12 +206,12 @@ var (
 			{
 				Name:    "ledgerentry_store_id_card_type_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[3], LedgerEntriesColumns[11]},
+				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[3], LedgerEntriesColumns[10]},
 			},
 			{
 				Name:    "ledgerentry_store_id_type_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[2], LedgerEntriesColumns[11]},
+				Columns: []*schema.Column{LedgerEntriesColumns[1], LedgerEntriesColumns[2], LedgerEntriesColumns[10]},
 			},
 		},
 	}
@@ -436,9 +442,9 @@ var (
 		PrimaryKey: []*schema.Column{SmsCodesColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "smscode_phone_scene",
+				Name:    "smscode_phone_scene_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{SmsCodesColumns[1], SmsCodesColumns[2]},
+				Columns: []*schema.Column{SmsCodesColumns[1], SmsCodesColumns[2], SmsCodesColumns[6]},
 			},
 			{
 				Name:    "smscode_expires_at",
@@ -599,6 +605,7 @@ func init() {
 	}
 	LedgerEntriesTable.ForeignKeys[0].RefTable = MembersTable
 	LedgerEntriesTable.ForeignKeys[1].RefTable = MemberCardsTable
+	LedgerEntriesTable.ForeignKeys[2].RefTable = UsersTable
 	LedgerEntriesTable.Annotation = &entsql.Annotation{
 		Table: "ledger_entries",
 	}

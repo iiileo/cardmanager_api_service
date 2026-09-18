@@ -6,6 +6,7 @@ import (
 	"card_manager/api_service/ent/ledgerentry"
 	"card_manager/api_service/ent/member"
 	"card_manager/api_service/ent/membercard"
+	"card_manager/api_service/ent/user"
 	"fmt"
 	"strings"
 	"time"
@@ -57,11 +58,13 @@ type LedgerEntryEdges struct {
 	Member *Member `json:"member,omitempty"`
 	// Card holds the value of the card edge.
 	Card *MemberCard `json:"card,omitempty"`
+	// Operator holds the value of the operator edge.
+	Operator *User `json:"operator,omitempty"`
 	// Items holds the value of the items edge.
 	Items []*LedgerEntryItem `json:"items,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // MemberOrErr returns the Member value or an error if the edge
@@ -86,10 +89,21 @@ func (e LedgerEntryEdges) CardOrErr() (*MemberCard, error) {
 	return nil, &NotLoadedError{edge: "card"}
 }
 
+// OperatorOrErr returns the Operator value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e LedgerEntryEdges) OperatorOrErr() (*User, error) {
+	if e.Operator != nil {
+		return e.Operator, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "operator"}
+}
+
 // ItemsOrErr returns the Items value or an error if the edge
 // was not loaded in eager-loading.
 func (e LedgerEntryEdges) ItemsOrErr() ([]*LedgerEntryItem, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.Items, nil
 	}
 	return nil, &NotLoadedError{edge: "items"}
@@ -232,6 +246,11 @@ func (_m *LedgerEntry) QueryMember() *MemberQuery {
 // QueryCard queries the "card" edge of the LedgerEntry entity.
 func (_m *LedgerEntry) QueryCard() *MemberCardQuery {
 	return NewLedgerEntryClient(_m.config).QueryCard(_m)
+}
+
+// QueryOperator queries the "operator" edge of the LedgerEntry entity.
+func (_m *LedgerEntry) QueryOperator() *UserQuery {
+	return NewLedgerEntryClient(_m.config).QueryOperator(_m)
 }
 
 // QueryItems queries the "items" edge of the LedgerEntry entity.

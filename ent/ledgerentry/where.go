@@ -700,26 +700,6 @@ func OperatorIDNotIn(vs ...int64) predicate.LedgerEntry {
 	return predicate.LedgerEntry(sql.FieldNotIn(FieldOperatorID, vs...))
 }
 
-// OperatorIDGT applies the GT predicate on the "operator_id" field.
-func OperatorIDGT(v int64) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldGT(FieldOperatorID, v))
-}
-
-// OperatorIDGTE applies the GTE predicate on the "operator_id" field.
-func OperatorIDGTE(v int64) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldGTE(FieldOperatorID, v))
-}
-
-// OperatorIDLT applies the LT predicate on the "operator_id" field.
-func OperatorIDLT(v int64) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldLT(FieldOperatorID, v))
-}
-
-// OperatorIDLTE applies the LTE predicate on the "operator_id" field.
-func OperatorIDLTE(v int64) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldLTE(FieldOperatorID, v))
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.LedgerEntry {
 	return predicate.LedgerEntry(sql.FieldEQ(FieldCreatedAt, v))
@@ -798,6 +778,29 @@ func HasCard() predicate.LedgerEntry {
 func HasCardWith(preds ...predicate.MemberCard) predicate.LedgerEntry {
 	return predicate.LedgerEntry(func(s *sql.Selector) {
 		step := newCardStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasOperator applies the HasEdge predicate on the "operator" edge.
+func HasOperator() predicate.LedgerEntry {
+	return predicate.LedgerEntry(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, OperatorTable, OperatorColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOperatorWith applies the HasEdge predicate on the "operator" edge with a given conditions (other predicates).
+func HasOperatorWith(preds ...predicate.User) predicate.LedgerEntry {
+	return predicate.LedgerEntry(func(s *sql.Selector) {
+		step := newOperatorStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

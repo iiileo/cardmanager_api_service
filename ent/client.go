@@ -1042,6 +1042,22 @@ func (c *LedgerEntryClient) QueryCard(_m *LedgerEntry) *MemberCardQuery {
 	return query
 }
 
+// QueryOperator queries the operator edge of a LedgerEntry.
+func (c *LedgerEntryClient) QueryOperator(_m *LedgerEntry) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ledgerentry.Table, ledgerentry.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ledgerentry.OperatorTable, ledgerentry.OperatorColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryItems queries the items edge of a LedgerEntry.
 func (c *LedgerEntryClient) QueryItems(_m *LedgerEntry) *LedgerEntryItemQuery {
 	query := (&LedgerEntryItemClient{config: c.config}).Query()
@@ -2482,6 +2498,22 @@ func (c *UserClient) GetX(ctx context.Context, id int64) *User {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryOperatedLedgers queries the operated_ledgers edge of a User.
+func (c *UserClient) QueryOperatedLedgers(_m *User) *LedgerEntryQuery {
+	query := (&LedgerEntryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.OperatedLedgersTable, user.OperatedLedgersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
