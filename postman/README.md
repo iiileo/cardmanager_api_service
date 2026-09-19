@@ -172,6 +172,7 @@
 |------|------|------|------|
 | 调试 | GET | `/debug/access-logs` | 访问日志页面 |
 | 调试 | GET | `/debug/access-logs/api?limit=100` | 访问日志 JSON |
+| 调试 | GET | `/debug/er` | 数据库 ER 图（Mermaid） |
 
 ---
 

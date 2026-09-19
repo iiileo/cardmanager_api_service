@@ -24,6 +24,7 @@ access_log:
     - "/healthz"
     - "/debug/access-logs"
     - "/debug/access-logs/api"
+    - "/debug/er"
 
 auth:
   jwt_secret: "card-manager-dev-secret-change-me"

@@ -4,11 +4,12 @@ import (
 	"context"
 	"net/http"
 
+	"card_manager/api_service/internal/accesslog"
 	"card_manager/api_service/internal/api/middleware"
 	v1 "card_manager/api_service/internal/api/v1"
 	"card_manager/api_service/internal/auth"
-	"card_manager/api_service/internal/accesslog"
 	"card_manager/api_service/internal/config"
+	"card_manager/api_service/internal/erdiagram"
 	"card_manager/api_service/internal/logger"
 	"card_manager/api_service/internal/service"
 	"github.com/gin-gonic/gin"
@@ -51,6 +52,7 @@ func NewRouter(
 	if cfg.AccessLog.UIEnabled && accessStore.Enabled() {
 		accesslog.RegisterRoutes(engine, accessStore, cfg.AccessLog.UIPath)
 	}
+	erdiagram.RegisterRoutes(engine, "/debug/er")
 
 	// System
 	engine.GET("/healthz", health.Health)
