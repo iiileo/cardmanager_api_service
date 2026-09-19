@@ -102,7 +102,7 @@ func (t *memTxnRepo) ConsumeCount(context.Context, int64, int, int64, *string) (
 func (t *memTxnRepo) OpenCard(context.Context, domaincard.CreateInput, domainledger.CreateInput) (*domaincard.Card, *domainledger.Entry, error) {
 	return nil, nil, nil
 }
-func (t *memTxnRepo) AddCountTimes(_ context.Context, cardID int64, times int, _ int64, _ *time.Time) (*domaincard.Card, *domainledger.Entry, error) {
+func (t *memTxnRepo) AddCountTimes(_ context.Context, cardID int64, times int, _ int64, _ *time.Time, amount *int) (*domaincard.Card, *domainledger.Entry, error) {
 	card := t.cards.byID[cardID]
 	if card == nil {
 		return nil, nil, fmt.Errorf("card not found")
@@ -115,7 +115,7 @@ func (t *memTxnRepo) AddCountTimes(_ context.Context, cardID int64, times int, _
 	card.RemainTimes = &after
 	card.Status = domaincard.StatusActive
 	t.seq++
-	entry := &domainledger.Entry{ID: t.seq, Type: domainledger.TypeOpen, CardID: cardID, Times: &times, TimesAfter: &after}
+	entry := &domainledger.Entry{ID: t.seq, Type: domainledger.TypeOpen, CardID: cardID, Times: &times, TimesAfter: &after, Amount: amount}
 	t.last = entry
 	return card, entry, nil
 }

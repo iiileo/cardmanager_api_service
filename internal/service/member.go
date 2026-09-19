@@ -179,7 +179,12 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 				to := time.Now().UTC().AddDate(0, *product.ValidMonths, 0)
 				validTo = &to
 			}
-			card, entry, err := s.txns.AddCountTimes(ctx, existing.ID, *product.Times, userID, validTo)
+			var amount *int
+			if product.Price > 0 {
+				p := product.Price
+				amount = &p
+			}
+			card, entry, err := s.txns.AddCountTimes(ctx, existing.ID, *product.Times, userID, validTo, amount)
 			if err != nil {
 				return nil, ierr.Internal(err)
 			}
@@ -196,7 +201,6 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 	if err != nil {
 		return nil, err
 	}
-	zero := 0
 	ledgerIn := domainledger.CreateInput{
 		Type:       domainledger.TypeOpen,
 		CardType:   product.Type,
@@ -214,8 +218,21 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 		}
 		ledgerIn.Times = &t
 		ledgerIn.TimesAfter = &t
+		if product.Price > 0 {
+			p := product.Price
+			ledgerIn.Amount = &p
+		}
 	case domainproduct.TypePack:
-		ledgerIn.Times = &zero
+		// 套餐开卡单独记 open；售价与项目次数写入流水便于对账
+		if product.Price > 0 {
+			p := product.Price
+			ledgerIn.Amount = &p
+		}
+		total := 0
+		for _, it := range cardIn.Items {
+			total += it.RemainTimes
+		}
+		ledgerIn.Times = &total
 	}
 
 	card, entry, err := s.txns.OpenCard(ctx, cardIn, ledgerIn)
@@ -239,7 +256,12 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 					to := time.Now().UTC().AddDate(0, *product.ValidMonths, 0)
 					validTo = &to
 				}
-				card, entry, addErr := s.txns.AddCountTimes(ctx, existing.ID, *product.Times, userID, validTo)
+				var amount *int
+				if product.Price > 0 {
+					p := product.Price
+					amount = &p
+				}
+				card, entry, addErr := s.txns.AddCountTimes(ctx, existing.ID, *product.Times, userID, validTo, amount)
 				if addErr == nil {
 					return &dto.OpenCardResponse{
 						Member:   &dto.MemberBrief{ID: fmt.Sprintf("%d", m.ID), Name: m.Name, Phone: m.Phone},

@@ -23,7 +23,7 @@ type CardTxnRepository interface {
 	ConsumePack(ctx context.Context, cardID int64, items []domaincard.PackDeductItem, operatorID int64, remark *string) (*domaincard.Card, *domainledger.Entry, error)
 	OpenCard(ctx context.Context, cardIn domaincard.CreateInput, ledgerIn domainledger.CreateInput) (*domaincard.Card, *domainledger.Entry, error)
 	// AddCountTimes 次卡续次（同卡累加次数，记开卡流水）。
-	AddCountTimes(ctx context.Context, cardID int64, times int, operatorID int64, validTo *time.Time) (*domaincard.Card, *domainledger.Entry, error)
+	AddCountTimes(ctx context.Context, cardID int64, times int, operatorID int64, validTo *time.Time, amount *int) (*domaincard.Card, *domainledger.Entry, error)
 }
 
 type cardTxnRepository struct {
@@ -366,6 +366,19 @@ func (r *cardTxnRepository) OpenCard(ctx context.Context, cardIn domaincard.Crea
 		if ledgerIn.CardType == "" {
 			ledgerIn.CardType = cardIn.Type
 		}
+		// 套餐开卡：流水明细写入各项目赠送次数
+		if cardIn.Type == domaincard.TypePack && len(items) > 0 && len(ledgerIn.Items) == 0 {
+			ledgerIn.Items = make([]domainledger.ItemInput, 0, len(items))
+			for _, row := range items {
+				ledgerIn.Items = append(ledgerIn.Items, domainledger.ItemInput{
+					ItemBalanceID: row.ID,
+					ProductItemID: row.ProductItemID,
+					NameSnapshot:  row.NameSnapshot,
+					Times:         row.RemainTimes,
+					TimesAfter:    row.RemainTimes,
+				})
+			}
+		}
 		e, ledItems, err := r.createLedger(ctx, tx, ledgerIn)
 		if err != nil {
 			return err
@@ -377,7 +390,7 @@ func (r *cardTxnRepository) OpenCard(ctx context.Context, cardIn domaincard.Crea
 	return card, entry, err
 }
 
-func (r *cardTxnRepository) AddCountTimes(ctx context.Context, cardID int64, times int, operatorID int64, validTo *time.Time) (*domaincard.Card, *domainledger.Entry, error) {
+func (r *cardTxnRepository) AddCountTimes(ctx context.Context, cardID int64, times int, operatorID int64, validTo *time.Time, amount *int) (*domaincard.Card, *domainledger.Entry, error) {
 	if times <= 0 {
 		return nil, nil, fmt.Errorf("times must be positive")
 	}
@@ -409,7 +422,7 @@ func (r *cardTxnRepository) AddCountTimes(ctx context.Context, cardID int64, tim
 			after = *c2.RemainTimes
 		}
 		add := times
-		e, items, err := r.createLedger(ctx, tx, domainledger.CreateInput{
+		in := domainledger.CreateInput{
 			StoreID:    c2.StoreID,
 			MemberID:   c2.MemberID,
 			CardID:     c2.ID,
@@ -418,7 +431,11 @@ func (r *cardTxnRepository) AddCountTimes(ctx context.Context, cardID int64, tim
 			Times:      &add,
 			TimesAfter: &after,
 			OperatorID: operatorID,
-		})
+		}
+		if amount != nil && *amount > 0 {
+			in.Amount = amount
+		}
+		e, items, err := r.createLedger(ctx, tx, in)
 		if err != nil {
 			return err
 		}

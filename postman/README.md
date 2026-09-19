@@ -84,7 +84,7 @@
 
 仅**列表**接口：`1` / `true` / `yes` / `on` → 响应带 `stats`（与同路径 `/stats` 结构一致）。
 
-适用：`GET /api/v1/ledger`、`/recharges`、`/consumes`。
+适用：`GET /api/v1/ledger`、`/recharges`、`/opens`、`/consumes`。
 
 ---
 
@@ -156,6 +156,9 @@
 | 流水 | GET | `/api/v1/recharges` | ✓ | ✓ | 充值记录列表 |
 | 流水 | GET | `/api/v1/recharges/stats` | ✓ | ✓ | 充值汇总 |
 | 流水 | GET | `/api/v1/recharges/:id` | ✓ | ✓ | 充值详情 |
+| 流水 | GET | `/api/v1/opens` | ✓ | ✓ | 开卡记录列表 |
+| 流水 | GET | `/api/v1/opens/stats` | ✓ | ✓ | 开卡汇总 |
+| 流水 | GET | `/api/v1/opens/:id` | ✓ | ✓ | 开卡详情 |
 | 流水 | GET | `/api/v1/consumes` | ✓ | ✓ | 消费记录列表 |
 | 流水 | GET | `/api/v1/consumes/stats` | ✓ | ✓ | 消费汇总 |
 | 流水 | GET | `/api/v1/consumes/:id` | ✓ | ✓ | 消费详情 |
@@ -325,15 +328,17 @@ GET {{baseUrl}}/api/v1/members?q=张三&page=1&page_size=20
 |--------|------|
 | （省略） | 全部（含开卡） |
 | `txn` | 充值 + 消费（不含开卡） |
-| `recharge` / `consume` | 子集 |
+| `open` / `recharge` / `consume` | 子集 |
 
-| `type` | `recharge` · `consume_value` · `consume_count` · `consume_pack` · `open` |
+| `type` | `open` · `recharge` · `consume_value` · `consume_count` · `consume_pack` |
 
 公共 Query：`member_id`、`card_id`、`from`、`to`、`page`、`page_size`、`card_type`（`value|count|pack`）、`include_stats`。
 
 `GET /api/v1/ledger/stats`：**未传 `kind` 时默认按 `txn` 汇总**。
 
-`/recharges`、`/consumes` 路径已限定类型，仍可用 `type` 细筛；列表支持 `include_stats=1`。
+`/recharges`、`/opens`、`/consumes` 路径已限定类型，仍可用 `type` 细筛（消费侧）；列表支持 `include_stats=1`。
+
+开卡记录也可：`GET /api/v1/opens`、`GET /api/v1/opens/:id`、`GET /api/v1/opens/stats`（或 `GET /api/v1/ledger?kind=open`）。
 
 ---
 
@@ -348,8 +353,9 @@ PUT body：`enabled`、`notify_boss`、`wechat`、`app`（启用时至少一种�
 ## 开卡约定
 
 - 同店同会员：**储值卡仅一张**；重复开储值卡返回已有卡（`ledger_id` 可能为空）
-- **次卡仅一张**：重复开次卡会在原卡上**累加卡种次数**，并记一笔开卡流水（`ledger_id` 有值，`remain_times` 增加）
-- **套餐卡**可多张
+- **次卡仅一张**：重复开次卡会在原卡上**累加卡种次数**，记一笔 **`open`（开卡）** 流水（含 `times` / `times_after`，卡种有售价时带 `amount`）
+- **套餐卡**可多张；每次开套餐记一笔 **`open`** 流水（含售价 `amount`、项目次数明细 `items`）
+- 查询开卡：`GET /api/v1/opens`（或 `GET /api/v1/ledger?kind=open`）
 - 同店同会员：储值卡 / 次卡各一张的唯一约束仍保留（续次不新建卡）
 
 ---
