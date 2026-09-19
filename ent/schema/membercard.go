@@ -58,7 +58,7 @@ func (MemberCard) Indexes() []ent.Index {
 		index.Fields("member_id"),
 		index.Fields("store_id", "type"),
 		index.Fields("store_id", "status"),
-		// 同店同会员的储值卡、次卡各仅一张（套餐卡可多张）
+		// 同店同会员的储值卡、次卡各仅一张（次卡重复开卡走续次；套餐卡可多张）
 		index.Fields("store_id", "member_id", "type").
 			Unique().
 			Annotations(entsql.IndexWhere("type IN ('value', 'count')")),

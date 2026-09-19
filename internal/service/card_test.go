@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"card_manager/api_service/internal/api/dto"
 	"card_manager/api_service/internal/config"
@@ -99,6 +101,23 @@ func (t *memTxnRepo) ConsumeCount(context.Context, int64, int, int64, *string) (
 }
 func (t *memTxnRepo) OpenCard(context.Context, domaincard.CreateInput, domainledger.CreateInput) (*domaincard.Card, *domainledger.Entry, error) {
 	return nil, nil, nil
+}
+func (t *memTxnRepo) AddCountTimes(_ context.Context, cardID int64, times int, _ int64, _ *time.Time) (*domaincard.Card, *domainledger.Entry, error) {
+	card := t.cards.byID[cardID]
+	if card == nil {
+		return nil, nil, fmt.Errorf("card not found")
+	}
+	cur := 0
+	if card.RemainTimes != nil {
+		cur = *card.RemainTimes
+	}
+	after := cur + times
+	card.RemainTimes = &after
+	card.Status = domaincard.StatusActive
+	t.seq++
+	entry := &domainledger.Entry{ID: t.seq, Type: domainledger.TypeOpen, CardID: cardID, Times: &times, TimesAfter: &after}
+	t.last = entry
+	return card, entry, nil
 }
 func (t *memTxnRepo) ConsumePack(_ context.Context, cardID int64, items []domaincard.PackDeductItem, operatorID int64, remark *string) (*domaincard.Card, *domainledger.Entry, error) {
 	card := t.cards.byID[cardID]

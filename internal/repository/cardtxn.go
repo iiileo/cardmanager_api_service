@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"card_manager/api_service/ent"
 	entbalance "card_manager/api_service/ent/carditembalance"
@@ -21,6 +22,8 @@ type CardTxnRepository interface {
 	ConsumeCount(ctx context.Context, cardID int64, times int, operatorID int64, remark *string) (*domaincard.Card, *domainledger.Entry, error)
 	ConsumePack(ctx context.Context, cardID int64, items []domaincard.PackDeductItem, operatorID int64, remark *string) (*domaincard.Card, *domainledger.Entry, error)
 	OpenCard(ctx context.Context, cardIn domaincard.CreateInput, ledgerIn domainledger.CreateInput) (*domaincard.Card, *domainledger.Entry, error)
+	// AddCountTimes 次卡续次（同卡累加次数，记开卡流水）。
+	AddCountTimes(ctx context.Context, cardID int64, times int, operatorID int64, validTo *time.Time) (*domaincard.Card, *domainledger.Entry, error)
 }
 
 type cardTxnRepository struct {
@@ -369,6 +372,58 @@ func (r *cardTxnRepository) OpenCard(ctx context.Context, cardIn domaincard.Crea
 		}
 		card = domaincard.FromEnt(c, items)
 		entry = domainledger.FromEnt(e, ledItems)
+		return nil
+	})
+	return card, entry, err
+}
+
+func (r *cardTxnRepository) AddCountTimes(ctx context.Context, cardID int64, times int, operatorID int64, validTo *time.Time) (*domaincard.Card, *domainledger.Entry, error) {
+	if times <= 0 {
+		return nil, nil, fmt.Errorf("times must be positive")
+	}
+	var card *domaincard.Card
+	var entry *domainledger.Entry
+	err := r.client.WithTx(ctx, func(tx *ent.Tx) error {
+		c, err := r.loadCard(ctx, tx, cardID)
+		if err != nil {
+			return err
+		}
+		if c.Type != domaincard.TypeCount {
+			return fmt.Errorf("not count card")
+		}
+		upd := tx.MemberCard.UpdateOneID(cardID).
+			AddRemainTimes(times).
+			SetStatus(domaincard.StatusActive)
+		if validTo != nil {
+			upd.SetValidTo(*validTo)
+		}
+		if _, err := upd.Save(ctx); err != nil {
+			return err
+		}
+		c2, err := r.loadCard(ctx, tx, cardID)
+		if err != nil {
+			return err
+		}
+		after := 0
+		if c2.RemainTimes != nil {
+			after = *c2.RemainTimes
+		}
+		add := times
+		e, items, err := r.createLedger(ctx, tx, domainledger.CreateInput{
+			StoreID:    c2.StoreID,
+			MemberID:   c2.MemberID,
+			CardID:     c2.ID,
+			Type:       domainledger.TypeOpen,
+			CardType:   domaincard.TypeCount,
+			Times:      &add,
+			TimesAfter: &after,
+			OperatorID: operatorID,
+		})
+		if err != nil {
+			return err
+		}
+		card = domaincard.FromEnt(c2, nil)
+		entry = domainledger.FromEnt(e, items)
 		return nil
 	})
 	return card, entry, err

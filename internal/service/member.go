@@ -148,8 +148,8 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 		}
 	}
 
-	// 储值卡、次卡每人每店仅一张：已存在则直接返回
-	if product.Type == domainproduct.TypeValue || product.Type == domainproduct.TypeCount {
+	// 储值卡每人每店仅一张：已存在则直接返回
+	if product.Type == domainproduct.TypeValue {
 		existing, err := s.cards.GetByMemberAndType(ctx, storeID, m.ID, product.Type)
 		if err != nil {
 			return nil, ierr.Internal(err)
@@ -160,6 +160,34 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 				Member:   &dto.MemberBrief{ID: fmt.Sprintf("%d", m.ID), Name: m.Name, Phone: m.Phone},
 				Card:     toCardDetail(existing, m),
 				LedgerID: "",
+			}, nil
+		}
+	}
+
+	// 次卡每人每店一张：已存在则续次（按卡种次数累加）
+	if product.Type == domainproduct.TypeCount {
+		existing, err := s.cards.GetByMemberAndType(ctx, storeID, m.ID, product.Type)
+		if err != nil {
+			return nil, ierr.Internal(err)
+		}
+		if existing != nil {
+			if product.Times == nil || *product.Times <= 0 {
+				return nil, ierr.Validation("次卡卡种缺少次数配置")
+			}
+			var validTo *time.Time
+			if product.ValidMonths != nil && *product.ValidMonths > 0 {
+				to := time.Now().UTC().AddDate(0, *product.ValidMonths, 0)
+				validTo = &to
+			}
+			card, entry, err := s.txns.AddCountTimes(ctx, existing.ID, *product.Times, userID, validTo)
+			if err != nil {
+				return nil, ierr.Internal(err)
+			}
+			s.log.Info(ctx, "count card renewed", "store_id", storeID, "member_id", m.ID, "card_id", card.ID, "add_times", *product.Times)
+			return &dto.OpenCardResponse{
+				Member:   &dto.MemberBrief{ID: fmt.Sprintf("%d", m.ID), Name: m.Name, Phone: m.Phone},
+				Card:     toCardDetail(card, m),
+				LedgerID: fmt.Sprintf("%d", entry.ID),
 			}, nil
 		}
 	}
@@ -192,7 +220,7 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 
 	card, entry, err := s.txns.OpenCard(ctx, cardIn, ledgerIn)
 	if err != nil {
-		if (product.Type == domainproduct.TypeValue || product.Type == domainproduct.TypeCount) && ent.IsConstraintError(err) {
+		if product.Type == domainproduct.TypeValue && ent.IsConstraintError(err) {
 			existing, getErr := s.cards.GetByMemberAndType(ctx, storeID, m.ID, product.Type)
 			if getErr == nil && existing != nil {
 				return &dto.OpenCardResponse{
@@ -200,6 +228,25 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 					Card:     toCardDetail(existing, m),
 					LedgerID: "",
 				}, nil
+			}
+		}
+		// 次卡并发首开冲突：回退为续次
+		if product.Type == domainproduct.TypeCount && ent.IsConstraintError(err) {
+			existing, getErr := s.cards.GetByMemberAndType(ctx, storeID, m.ID, product.Type)
+			if getErr == nil && existing != nil && product.Times != nil && *product.Times > 0 {
+				var validTo *time.Time
+				if product.ValidMonths != nil && *product.ValidMonths > 0 {
+					to := time.Now().UTC().AddDate(0, *product.ValidMonths, 0)
+					validTo = &to
+				}
+				card, entry, addErr := s.txns.AddCountTimes(ctx, existing.ID, *product.Times, userID, validTo)
+				if addErr == nil {
+					return &dto.OpenCardResponse{
+						Member:   &dto.MemberBrief{ID: fmt.Sprintf("%d", m.ID), Name: m.Name, Phone: m.Phone},
+						Card:     toCardDetail(card, m),
+						LedgerID: fmt.Sprintf("%d", entry.ID),
+					}, nil
+				}
 			}
 		}
 		return nil, ierr.Internal(err)
