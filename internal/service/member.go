@@ -214,8 +214,24 @@ func (s *memberService) OpenCard(ctx context.Context, userID, storeID int64, req
 		}
 		ledgerIn.Times = &t
 		ledgerIn.TimesAfter = &t
+		if product.Price > 0 {
+			p := product.Price
+			ledgerIn.Amount = &p
+		}
 	case domainproduct.TypePack:
-		ledgerIn.Times = &zero
+		if product.Price > 0 {
+			p := product.Price
+			ledgerIn.Amount = &p
+		}
+		total := 0
+		for _, it := range cardIn.Items {
+			total += it.RemainTimes
+		}
+		if total > 0 {
+			ledgerIn.Times = &total
+		} else {
+			ledgerIn.Times = &zero
+		}
 	}
 
 	card, entry, err := s.txns.OpenCard(ctx, cardIn, ledgerIn)

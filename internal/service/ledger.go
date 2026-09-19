@@ -16,7 +16,7 @@ import (
 )
 
 type LedgerListQuery struct {
-	Kind         string // 空=不限；txn=充值+消费（不含开卡）
+	Kind         string // 空=不限；txn=充值+消费（不含开卡）；open|recharge|consume
 	Type         string // 精确类型：recharge|consume_value|consume_count|consume_pack|open
 	CardType     string // value|count|pack
 	MemberID     string
@@ -34,10 +34,13 @@ type LedgerService interface {
 
 	ListRecharges(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.LedgerListResponse, error)
 	ListConsumes(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.LedgerListResponse, error)
+	ListOpens(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.LedgerListResponse, error)
 	GetRecharge(ctx context.Context, userID, storeID, id int64) (*dto.LedgerEntryResponse, error)
 	GetConsume(ctx context.Context, userID, storeID, id int64) (*dto.LedgerEntryResponse, error)
+	GetOpen(ctx context.Context, userID, storeID, id int64) (*dto.LedgerEntryResponse, error)
 	StatsRecharges(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.RecordStatsResponse, error)
 	StatsConsumes(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.RecordStatsResponse, error)
+	StatsOpens(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.RecordStatsResponse, error)
 	StatsTxns(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.RecordStatsResponse, error)
 }
 
@@ -93,6 +96,10 @@ func (s *ledgerService) ListRecharges(ctx context.Context, userID, storeID int64
 	return s.list(ctx, userID, storeID, q, []string{domainledger.TypeRecharge})
 }
 
+func (s *ledgerService) ListOpens(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.LedgerListResponse, error) {
+	return s.list(ctx, userID, storeID, q, []string{domainledger.TypeOpen})
+}
+
 func (s *ledgerService) ListConsumes(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.LedgerListResponse, error) {
 	types, err := resolveLedgerTypes(q, domainledger.ConsumeTypes())
 	if err != nil {
@@ -112,6 +119,17 @@ func (s *ledgerService) GetRecharge(ctx context.Context, userID, storeID, id int
 	return resp, nil
 }
 
+func (s *ledgerService) GetOpen(ctx context.Context, userID, storeID, id int64) (*dto.LedgerEntryResponse, error) {
+	resp, err := s.Get(ctx, userID, storeID, id)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Type != domainledger.TypeOpen {
+		return nil, ierr.NotFound("开卡记录不存在")
+	}
+	return resp, nil
+}
+
 func (s *ledgerService) GetConsume(ctx context.Context, userID, storeID, id int64) (*dto.LedgerEntryResponse, error) {
 	resp, err := s.Get(ctx, userID, storeID, id)
 	if err != nil {
@@ -125,6 +143,10 @@ func (s *ledgerService) GetConsume(ctx context.Context, userID, storeID, id int6
 
 func (s *ledgerService) StatsRecharges(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.RecordStatsResponse, error) {
 	return s.stats(ctx, userID, storeID, q, []string{domainledger.TypeRecharge})
+}
+
+func (s *ledgerService) StatsOpens(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.RecordStatsResponse, error) {
+	return s.stats(ctx, userID, storeID, q, []string{domainledger.TypeOpen})
 }
 
 func (s *ledgerService) StatsConsumes(ctx context.Context, userID, storeID int64, q LedgerListQuery) (*dto.RecordStatsResponse, error) {
@@ -270,10 +292,12 @@ func resolveLedgerTypes(q LedgerListQuery, base []string) ([]string, error) {
 		allowed = append([]string{domainledger.TypeRecharge}, domainledger.ConsumeTypes()...)
 	case "recharge":
 		allowed = []string{domainledger.TypeRecharge}
+	case "open":
+		allowed = []string{domainledger.TypeOpen}
 	case "consume":
 		allowed = domainledger.ConsumeTypes()
 	default:
-		return nil, ierr.Validation("kind 不正确，可选 txn|recharge|consume")
+		return nil, ierr.Validation("kind 不正确，可选 txn|recharge|consume|open")
 	}
 
 	if typ == "" {

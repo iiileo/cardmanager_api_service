@@ -152,6 +152,14 @@ func NewRouter(
 					recharges.GET("/:id", ledgerHandler.GetRecharge)
 				}
 
+				// 开卡记录（含次卡续次、套餐新开）
+				opens := storeScoped.Group("/opens")
+				{
+					opens.GET("", ledgerHandler.ListOpens)
+					opens.GET("/stats", ledgerHandler.StatsOpens)
+					opens.GET("/:id", ledgerHandler.GetOpen)
+				}
+
 				// 消费记录（含套餐 items 明细）
 				consumes := storeScoped.Group("/consumes")
 				{

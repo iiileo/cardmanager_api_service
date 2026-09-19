@@ -184,6 +184,20 @@ func TestLedgerRechargeConsumeAndStats(t *testing.T) {
 		t.Fatalf("txn list should be recharge+consumes (3), got %d", txns.Total)
 	}
 
+	opens, err := svc.ListOpens(context.Background(), 9, 1, LedgerListQuery{Page: 1, PageSize: 20})
+	if err != nil {
+		t.Fatalf("ListOpens: %v", err)
+	}
+	if opens.Total != 1 || opens.List[0].Type != domainledger.TypeOpen {
+		t.Fatalf("unexpected opens: %+v", opens)
+	}
+	if _, err := svc.GetOpen(context.Background(), 9, 1, 4); err != nil {
+		t.Fatalf("GetOpen: %v", err)
+	}
+	if _, err := svc.GetOpen(context.Background(), 9, 1, 1); err == nil {
+		t.Fatal("recharge id should not be an open")
+	}
+
 	consumes, err := svc.ListConsumes(context.Background(), 9, 1, LedgerListQuery{Page: 1, PageSize: 20})
 	if err != nil {
 		t.Fatalf("ListConsumes: %v", err)

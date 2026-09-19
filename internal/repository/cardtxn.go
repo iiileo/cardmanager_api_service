@@ -366,6 +366,18 @@ func (r *cardTxnRepository) OpenCard(ctx context.Context, cardIn domaincard.Crea
 		if ledgerIn.CardType == "" {
 			ledgerIn.CardType = cardIn.Type
 		}
+		if cardIn.Type == domaincard.TypePack && len(items) > 0 && len(ledgerIn.Items) == 0 {
+			ledgerIn.Items = make([]domainledger.ItemInput, 0, len(items))
+			for _, row := range items {
+				ledgerIn.Items = append(ledgerIn.Items, domainledger.ItemInput{
+					ItemBalanceID: row.ID,
+					ProductItemID: row.ProductItemID,
+					NameSnapshot:  row.NameSnapshot,
+					Times:         row.RemainTimes,
+					TimesAfter:    row.RemainTimes,
+				})
+			}
+		}
 		e, ledItems, err := r.createLedger(ctx, tx, ledgerIn)
 		if err != nil {
 			return err

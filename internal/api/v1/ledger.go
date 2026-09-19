@@ -77,6 +77,19 @@ func (h *LedgerHandler) ListRecharges(c *gin.Context) {
 	response.OK(c, resp)
 }
 
+func (h *LedgerHandler) ListOpens(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	resp, err := h.service.ListOpens(c.Request.Context(), userID, storeID, listQueryFrom(c))
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
 func (h *LedgerHandler) GetRecharge(c *gin.Context) {
 	userID, storeID, ok := userAndStore(c)
 	if !ok {
@@ -88,6 +101,24 @@ func (h *LedgerHandler) GetRecharge(c *gin.Context) {
 		return
 	}
 	resp, err := h.service.GetRecharge(c.Request.Context(), userID, storeID, id)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
+func (h *LedgerHandler) GetOpen(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	id, err := service.ParseLedgerID(c.Param("id"))
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	resp, err := h.service.GetOpen(c.Request.Context(), userID, storeID, id)
 	if err != nil {
 		response.Fail(c, err)
 		return
@@ -118,6 +149,19 @@ func (h *LedgerHandler) StatsRecharges(c *gin.Context) {
 		return
 	}
 	resp, err := h.service.StatsRecharges(c.Request.Context(), userID, storeID, listQueryFrom(c))
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.OK(c, resp)
+}
+
+func (h *LedgerHandler) StatsOpens(c *gin.Context) {
+	userID, storeID, ok := userAndStore(c)
+	if !ok {
+		return
+	}
+	resp, err := h.service.StatsOpens(c.Request.Context(), userID, storeID, listQueryFrom(c))
 	if err != nil {
 		response.Fail(c, err)
 		return
